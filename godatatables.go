@@ -1,5 +1,7 @@
-// Package datatables creates and manipulates data files in CSV format.
-package datatables
+// Package godatatables creates and manipulates data files in CSV format.
+// Date: Tue Dec 18, 2:42 PM
+
+package godatatables
 
 import (
 	"encoding/csv"

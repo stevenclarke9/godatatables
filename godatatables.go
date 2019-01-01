@@ -134,7 +134,6 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 						tableRow = append(tableRow, rightTableRow[:]...)
 					}
 					dtJoined.AppendRow(tableRow)
-					dtJoined.rowCount++
 				}
 				colEqual = 0
 			}
@@ -164,6 +163,10 @@ func (dt *DataTable) Select(colIndexes []int) *DataTable {
 		newDt.Table = append(newDt.Table, newDtRow)
 	}
 	return &newDt
+}
+
+func (dt *DataTable) Count() int {
+	return dt.rowCount
 }
 
 type dRow []DataRow

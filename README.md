@@ -41,6 +41,7 @@ func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable
 func (dt *DataTable) AppendRow(dr DataRow)
 func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexes []int, joinRightColumnIndexes []int, joinTable DataTable) *DataTable
 func (dt *DataTable) Order(colIndexes []int) *DataTable
+func (dt *DataTable) Count() int
 
 Sort interface implementation
 

@@ -165,7 +165,7 @@ func (dt *DataTable) Select(colIndexes []int) *DataTable {
 	return &newDt
 }
 
-func (dt *DataTable) Count() int {
+func (dt *DataTable) Count() int64 {
 	return dt.rowCount
 }
 

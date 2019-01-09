@@ -183,24 +183,98 @@ func (t dRow) Len() int {
 func (t dRow) Less(i, j int) bool {
 	//	fmt.Println(i, t[i][0], t[i][1], t[i][2], " : ", j, t[j][0], t[j][1], t[j][2])
 	lenIndexI := len(t[i])
+	lenIndexJ := len(t[j])
 	result := false
-	for k := 0; k < lenIndexI; k++ {
-		// if t[i][k] and t[j][k] are both a number.
+	for k := 0; (k < lenIndexI) && (k < lenIndexJ); k++ {
+		var float32I float64
+		var float32J float64
+		float32I = 0.0
+		float32J = 0.0
+		isFloat64I := false
+		isFloat64J := false
+		isIntI := false
+		isIntJ := false
+		// first check t[i][k] is an integer number
 		numberI , okI := strconv.Atoi(t[i][k])
+		if okI == nil {
+			isIntI = true
+		}
+		// and check that t[j][k] is an integer number
 		numberJ , okJ := strconv.Atoi(t[j][k])
+		if okI == nil {
+			isIntJ = true
+		}
+		if (okI != nil) {
+			// check for a float number
+			float32I, okI = strconv.ParseFloat(t[i][k],32)
+			if okI == nil {
+				isFloat64I = true
+			}
+		}
+		if (okJ != nil) {
+			// check for a float number
+			float32J, okJ = strconv.ParseFloat(t[j][k],32)
+			if okI == nil {
+				isFloat64J = true
+			}
+		}
 		if (okI == nil) && (okJ == nil) {
 			// then change both strings to a number and compare them as numbers.
-			if numberI == numberJ {
-				continue
-			} else {
-				if numberI < numberJ {
-					result = true
-					k = lenIndexI - 1
+			if isIntI && isIntJ {
+				if numberI == numberJ {
+					continue
 				} else {
-					result = false
-					k = lenIndexI - 1
+					if numberI < numberJ {
+						result = true
+						k = lenIndexI
+					} else {
+						result = false
+						k = lenIndexI
+					}
+				}
+			}
+			if isIntI && isFloat64J {
+				float32I = float64(numberI)
+				if float32I == float32J {
+					continue
+				} else {
+					if float32I < float32J {
+						result = true
+						k = lenIndexI
+					} else {
+						result = false
+						k = lenIndexI
+					}
 				}
 			}			
+			if isFloat64I && isIntJ {
+				float32J = float64(numberJ)
+				if float32I == float32J {
+					continue
+				} else {
+					if float32I < float32J {
+						result = true
+						k = lenIndexI
+					} else {
+						result = false
+						k = lenIndexI
+					}
+				}
+			}
+			if isFloat64I && isFloat64J {
+				if float32I == float32J {
+					continue
+				} else {
+					if float32I < float32J {
+						result = true
+						k = lenIndexI
+					} else {
+						result = false
+						k = lenIndexI
+					}
+				}
+			}			
+
 		} else {
 			// otherwise they can be compared as strings.
 			if t[i][k] == t[j][k] {
@@ -218,12 +292,13 @@ func (t dRow) Less(i, j int) bool {
 	}
 	return result
 }
+
 func (t dRow) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
 
 func (dt DataTable) String() string {
-	sfmt := ""
+    sfmt := ""
 	//sfmt = "TABLE START\n"
 	/* Ignore the dataRowIndex value */
 	for _, dataRow := range dt.Table {

@@ -5,7 +5,7 @@ package godatatables
 
 import (
 	"encoding/csv"
-	_ "fmt"
+	// "fmt"
 	"io"
 	"sort"
 	"strconv"
@@ -146,8 +146,9 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 
 func (dt *DataTable) Order(colIndexes []int) *DataTable {
 	//fmt.Println("the order method")
-	sort.Sort(dRow(dt.Table))
-	return dt
+	sortedDt := dt
+	sortedDt.sortRow()
+	return sortedDt
 }
 
 // Select returns a new DataTable that contains the selected columns from the "dt" DataTable.
@@ -170,7 +171,7 @@ func (dt *DataTable) Count() int64 {
 }
 
 type dRow []DataRow
-
+/*
 func (t dRow) Len() int {
 	count := 0
 	for _, i := range t {
@@ -179,7 +180,125 @@ func (t dRow) Len() int {
 	}
 	return count
 }
+*/
 
+func (dt *DataTable) sortRow() {
+// this is a comment
+	sort.Slice(dt.Table, func(i, j int) bool {
+		// fmt.Println(i, dt.Table[i][0], dt.Table[i][1], dt.Table[i][2], " : ", j, dt.Table[j][0], dt.Table[j][1], dt.Table[j][2])
+		lenIndexI := len(dt.Table[i])
+		lenIndexJ := len(dt.Table[j])
+		result := false
+		for k := 0; (k < lenIndexI) && (k < lenIndexJ); k++ {
+			var float32I float64
+			var float32J float64
+			float32I = 0.0
+			float32J = 0.0
+			isFloat64I := false
+			isFloat64J := false
+			isIntI := false
+			isIntJ := false
+			// first check t[i][k] is an integer number
+			numberI , okI := strconv.Atoi(dt.Table[i][k])
+			if okI == nil {
+				isIntI = true
+			}
+			// and check that t[j][k] is an integer number
+			numberJ , okJ := strconv.Atoi(dt.Table[j][k])
+			if okI == nil {
+				isIntJ = true
+			}
+			if (okI != nil) {
+				// check for a float number
+				float32I, okI = strconv.ParseFloat(dt.Table[i][k],32)
+				if okI == nil {
+					isFloat64I = true
+				}
+			}
+			if (okJ != nil) {
+				// check for a float number
+				float32J, okJ = strconv.ParseFloat(dt.Table[j][k],32)
+				if okI == nil {
+					isFloat64J = true
+				}
+			}
+			if (okI == nil) && (okJ == nil) {
+				// then change both strings to a number and compare them as numbers.
+				if isIntI && isIntJ {
+					if numberI == numberJ {
+						continue
+					} else {
+						if numberI < numberJ {
+							result = true
+							k = lenIndexI
+						} else {
+							result = false
+							k = lenIndexI
+						}
+					}
+				}
+				if isIntI && isFloat64J {
+					float32I = float64(numberI)
+					if float32I == float32J {
+						continue
+					} else {
+						if float32I < float32J {
+							result = true
+							k = lenIndexI
+						} else {
+							result = false
+							k = lenIndexI
+						}
+					}
+				}			
+				if isFloat64I && isIntJ {
+					float32J = float64(numberJ)
+					if float32I == float32J {
+						continue
+					} else {
+						if float32I < float32J {
+							result = true
+							k = lenIndexI
+						} else {
+							result = false
+							k = lenIndexI
+						}
+					}
+				}
+				if isFloat64I && isFloat64J {
+					if float32I == float32J {
+						continue
+					} else {
+						if float32I < float32J {
+							result = true
+							k = lenIndexI
+						} else {
+							result = false
+							k = lenIndexI
+						}
+					}
+				}			
+
+			} else {
+				// otherwise they can be compared as strings.
+				if dt.Table[i][k] == dt.Table[j][k] {
+					continue
+				} else {
+					if dt.Table[i][k] < dt.Table[j][k] {
+						result = true
+						k = lenIndexI - 1
+					} else {
+						result = false
+						k = lenIndexI - 1
+					}
+				}
+			}
+		}
+		return result
+	})
+}
+
+/*
 func (t dRow) Less(i, j int) bool {
 	//	fmt.Println(i, t[i][0], t[i][1], t[i][2], " : ", j, t[j][0], t[j][1], t[j][2])
 	lenIndexI := len(t[i])
@@ -296,6 +415,7 @@ func (t dRow) Less(i, j int) bool {
 func (t dRow) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
+*/
 
 func (dt DataTable) String() string {
     sfmt := ""

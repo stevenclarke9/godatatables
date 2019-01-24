@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	// "fmt"
 	"io"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -147,7 +148,7 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 func (dt *DataTable) Order(colIndexes []int) *DataTable {
 	//fmt.Println("the order method")
 	sortedDt := dt
-	sortedDt.sortRow()
+	sortedDt.sortRow(colIndexes)
 	return sortedDt
 }
 
@@ -181,115 +182,91 @@ func (t dRow) Len() int {
 	return count
 }
 */
+// compareIntAndFloat32 is a helper function for sortRow.
+// returns 0 if equal
+// returns -1 if i is less than f
+// returns 1 otherwise
+func compareIntAndFloat64(i int, f float64) int {
+	float32I := float64(i)
+	if float32I == f {
+		return 0
+	} else {
+		if float32I < f {
+			return -1
+		} else {
+			return 1
+		}
+	}
+}
 
-func (dt *DataTable) sortRow() {
+func (dt *DataTable) sortRow(indexes []int) {
 // this is a comment
 	sort.Slice(dt.Table, func(i, j int) bool {
 		// fmt.Println(i, dt.Table[i][0], dt.Table[i][1], dt.Table[i][2], " : ", j, dt.Table[j][0], dt.Table[j][1], dt.Table[j][2])
-		lenIndexI := len(dt.Table[i])
-		lenIndexJ := len(dt.Table[j])
+		var lenIndex int
+		if len(indexes) == 0 {
+			lenIndexI := len(dt.Table[i])
+			lenIndexJ := len(dt.Table[j])
+			lenIndex = int(math.Min(float64(lenIndexI),float64(lenIndexJ)))
+		} else {
+			lenIndex = len(indexes)
+		}
 		result := false
-		for k := 0; (k < lenIndexI) && (k < lenIndexJ); k++ {
-			var float32I float64
-			var float32J float64
-			float32I = 0.0
-			float32J = 0.0
+		for k := 0; k < lenIndex; k++ {
+			var float32I float64 = 0.0
+			var float32J float64 = 0.0
+			var okI error = nil
+			var okJ error = nil
 			isFloat64I := false
 			isFloat64J := false
-			isIntI := false
-			isIntJ := false
-			// first check t[i][k] is an integer number
-			numberI , okI := strconv.Atoi(dt.Table[i][k])
+			l := k
+			reverse := false
+			if len(indexes) > 0 {
+				l = indexes[k]
+				if l < 0 {
+					reverse = true
+					l = -l
+				}
+			}
+			valueI := dt.Table[i][l]
+			valueJ := dt.Table[j][l]
+			if reverse {
+				// swap the values
+				valueI, valueJ = valueJ, valueI
+			}
+			// check for a float number
+			float32I, okI = strconv.ParseFloat(valueI,32)
 			if okI == nil {
-				isIntI = true
+				isFloat64I = true
 			}
-			// and check that t[j][k] is an integer number
-			numberJ , okJ := strconv.Atoi(dt.Table[j][k])
-			if okI == nil {
-				isIntJ = true
+			// check for a float number
+			float32J, okJ = strconv.ParseFloat(valueJ,32)
+			if okJ == nil {
+				isFloat64J = true
 			}
-			if (okI != nil) {
-				// check for a float number
-				float32I, okI = strconv.ParseFloat(dt.Table[i][k],32)
-				if okI == nil {
-					isFloat64I = true
-				}
-			}
-			if (okJ != nil) {
-				// check for a float number
-				float32J, okJ = strconv.ParseFloat(dt.Table[j][k],32)
-				if okI == nil {
-					isFloat64J = true
-				}
-			}
-			if (okI == nil) && (okJ == nil) {
-				// then change both strings to a number and compare them as numbers.
-				if isIntI && isIntJ {
-					if numberI == numberJ {
-						continue
-					} else {
-						if numberI < numberJ {
-							result = true
-							k = lenIndexI
-						} else {
-							result = false
-							k = lenIndexI
-						}
-					}
-				}
-				if isIntI && isFloat64J {
-					float32I = float64(numberI)
-					if float32I == float32J {
-						continue
-					} else {
-						if float32I < float32J {
-							result = true
-							k = lenIndexI
-						} else {
-							result = false
-							k = lenIndexI
-						}
-					}
-				}			
-				if isFloat64I && isIntJ {
-					float32J = float64(numberJ)
-					if float32I == float32J {
-						continue
-					} else {
-						if float32I < float32J {
-							result = true
-							k = lenIndexI
-						} else {
-							result = false
-							k = lenIndexI
-						}
-					}
-				}
-				if isFloat64I && isFloat64J {
-					if float32I == float32J {
-						continue
-					} else {
-						if float32I < float32J {
-							result = true
-							k = lenIndexI
-						} else {
-							result = false
-							k = lenIndexI
-						}
-					}
-				}			
-
-			} else {
-				// otherwise they can be compared as strings.
-				if dt.Table[i][k] == dt.Table[j][k] {
+			if isFloat64I && isFloat64J {
+				if float32I == float32J {
 					continue
 				} else {
-					if dt.Table[i][k] < dt.Table[j][k] {
+					if float32I < float32J {
 						result = true
-						k = lenIndexI - 1
+						k = lenIndex
 					} else {
 						result = false
-						k = lenIndexI - 1
+						k = lenIndex
+					}
+				}
+			} else {
+				// otherwise they can be compared as strings.
+				if valueI == valueJ {
+					continue
+				} else {
+					if valueI < valueJ {
+						result = true
+						k = lenIndex
+					} else {
+						result = false
+						k = lenIndex
 					}
 				}
 			}

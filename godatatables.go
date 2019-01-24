@@ -1,5 +1,5 @@
 // Package godatatables creates and manipulates data files in CSV format.
-// Date: Tue Dec 18, 2:42 PM
+// Date: Thursday 24 January 2019, 2:27 PM
 
 package godatatables
 
@@ -17,7 +17,7 @@ type DataRow []string
 
 type DataTable struct {
 	header   []string
-	Table    []DataRow
+	table    []DataRow
 	rowCount int64
 }
 
@@ -76,7 +76,7 @@ func ReadTable(r io.Reader) (dt DataTable, err error) {
 
 // ToDo: DataTableWriter
 func NewDataTable(records [][]string) DataTable {
-	dt := DataTable{header: []string{}, Table: []DataRow{}, rowCount: 0}
+	dt := DataTable{header: []string{}, table: []DataRow{}, rowCount: 0}
 	for _, row := range records {
 		dr := DataRow{}
 		for _, col := range row {
@@ -91,9 +91,9 @@ func NewDataTable(records [][]string) DataTable {
 func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable {
 	newDt := DataTable{
 		header:   []string{},
-		Table:    []DataRow{},
+		table:    []DataRow{},
 		rowCount: 0}
-	for _, dtRow := range dt.Table {
+	for _, dtRow := range dt.table {
 		if f(dtRow) {
 			newDt.AppendRow(dtRow)
 		}
@@ -102,22 +102,22 @@ func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable {
 }
 
 func (dt *DataTable) AppendRow(dr DataRow) {
-	dt.Table = append(dt.Table, dr)
+	dt.table = append(dt.table, dr)
 	dt.rowCount++
 }
 
 func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexes []int, joinRightColumnIndexes []int, joinTable DataTable) *DataTable {
 	dtJoined := DataTable{
 		header:   []string{},
-		Table:    []DataRow{},
+		table:    []DataRow{},
 		rowCount: 0}
 	lenLeftColumnIndexes := len(joinLeftColumnIndexes)
 	lenRightColumnIndexes := len(joinRightColumnIndexes)
 
 	if lenLeftColumnIndexes == lenRightColumnIndexes {
-		for _, leftTableRow := range dt.Table {
+		for _, leftTableRow := range dt.table {
 			colEqual := 0
-			for _, rightTableRow := range joinTable.Table {
+			for _, rightTableRow := range joinTable.table {
 				for colIndex, leftColNumber := range joinLeftColumnIndexes {
 					rightColNumber := joinRightColumnIndexes[colIndex]
 					if leftTableRow[leftColNumber] == rightTableRow[rightColNumber] {
@@ -157,12 +157,12 @@ func (dt *DataTable) Order(colIndexes []int) *DataTable {
 // This func allows call chaining. eg. 	recs.Select([]int{0,2}).Select([]int{1})
 func (dt *DataTable) Select(colIndexes []int) *DataTable {
 	newDt := NewDataTable([][]string{})
-	for _, dtRow := range dt.Table {
+	for _, dtRow := range dt.table {
 		newDtRow := DataRow{}
 		for _, colNumber := range colIndexes {
 			newDtRow = append(newDtRow, dtRow[colNumber])
 		}
-		newDt.Table = append(newDt.Table, newDtRow)
+		newDt.table = append(newDt.table, newDtRow)
 	}
 	return &newDt
 }
@@ -172,41 +172,47 @@ func (dt *DataTable) Count() int64 {
 }
 
 type dRow []DataRow
-/*
-func (t dRow) Len() int {
-	count := 0
-	for _, i := range t {
-		_ = i
-		count++
-	}
-	return count
-}
-*/
-// compareIntAndFloat32 is a helper function for sortRow.
-// returns 0 if equal
-// returns -1 if i is less than f
-// returns 1 otherwise
-func compareIntAndFloat64(i int, f float64) int {
-	float32I := float64(i)
-	if float32I == f {
-		return 0
+
+// compareFloat64 is a helper function for sortRow.
+// returns false and -1 if i ia equal to j
+// returns true and maxIndex if i is less than j
+// returns false and maxIndex if i is greater than j
+func compareFloat64(i float64, j float64, maxIndex int) (bool, int) {
+	if i == j {
+		return false, -1
 	} else {
-		if float32I < f {
-			return -1
+		if i < j {
+			return true, maxIndex
 		} else {
-			return 1
+			return false, maxIndex
+		}
+	}
+}
+
+// compareString is a helper function for sortRow.
+// returns false and -1 if i ia equal to j
+// returns true and maxIndex if i is less than j
+// returns false and maxIndex if i is greater than j
+func compareString(i string, j string, maxIndex int) (bool, int) {
+	if i == j {
+		return false, -1
+	} else {
+		if i < j {
+			return true, maxIndex
+		} else {
+			return false, maxIndex
 		}
 	}
 }
 
 func (dt *DataTable) sortRow(indexes []int) {
 // this is a comment
-	sort.Slice(dt.Table, func(i, j int) bool {
+	sort.Slice(dt.table, func(i, j int) bool {
 		// fmt.Println(i, dt.Table[i][0], dt.Table[i][1], dt.Table[i][2], " : ", j, dt.Table[j][0], dt.Table[j][1], dt.Table[j][2])
 		var lenIndex int
 		if len(indexes) == 0 {
-			lenIndexI := len(dt.Table[i])
-			lenIndexJ := len(dt.Table[j])
+			lenIndexI := len(dt.table[i])
+			lenIndexJ := len(dt.table[j])
 			lenIndex = int(math.Min(float64(lenIndexI),float64(lenIndexJ)))
 		} else {
 			lenIndex = len(indexes)
@@ -228,8 +234,8 @@ func (dt *DataTable) sortRow(indexes []int) {
 					l = -l
 				}
 			}
-			valueI := dt.Table[i][l]
-			valueJ := dt.Table[j][l]
+			valueI := dt.table[i][l]
+			valueJ := dt.table[j][l]
 			if reverse {
 				// swap the values
 				valueI, valueJ = valueJ, valueI
@@ -245,29 +251,21 @@ func (dt *DataTable) sortRow(indexes []int) {
 				isFloat64J = true
 			}
 			if isFloat64I && isFloat64J {
-				if float32I == float32J {
+				tmpResult, maxIndex := compareFloat64(float32I,float32J,lenIndex)
+				if maxIndex == -1 {
 					continue
 				} else {
-					if float32I < float32J {
-						result = true
-						k = lenIndex
-					} else {
-						result = false
-						k = lenIndex
-					}
+					result = tmpResult
+					k = lenIndex
 				}
 			} else {
 				// otherwise they can be compared as strings.
-				if valueI == valueJ {
+				tmpResult, maxIndex := compareString(valueI,valueJ,lenIndex)
+				if maxIndex == -1 {
 					continue
 				} else {
-					if valueI < valueJ {
-						result = true
-						k = lenIndex
-					} else {
-						result = false
-						k = lenIndex
-					}
+					result = tmpResult
+					k = lenIndex
 				}
 			}
 		}
@@ -275,130 +273,11 @@ func (dt *DataTable) sortRow(indexes []int) {
 	})
 }
 
-/*
-func (t dRow) Less(i, j int) bool {
-	//	fmt.Println(i, t[i][0], t[i][1], t[i][2], " : ", j, t[j][0], t[j][1], t[j][2])
-	lenIndexI := len(t[i])
-	lenIndexJ := len(t[j])
-	result := false
-	for k := 0; (k < lenIndexI) && (k < lenIndexJ); k++ {
-		var float32I float64
-		var float32J float64
-		float32I = 0.0
-		float32J = 0.0
-		isFloat64I := false
-		isFloat64J := false
-		isIntI := false
-		isIntJ := false
-		// first check t[i][k] is an integer number
-		numberI , okI := strconv.Atoi(t[i][k])
-		if okI == nil {
-			isIntI = true
-		}
-		// and check that t[j][k] is an integer number
-		numberJ , okJ := strconv.Atoi(t[j][k])
-		if okI == nil {
-			isIntJ = true
-		}
-		if (okI != nil) {
-			// check for a float number
-			float32I, okI = strconv.ParseFloat(t[i][k],32)
-			if okI == nil {
-				isFloat64I = true
-			}
-		}
-		if (okJ != nil) {
-			// check for a float number
-			float32J, okJ = strconv.ParseFloat(t[j][k],32)
-			if okI == nil {
-				isFloat64J = true
-			}
-		}
-		if (okI == nil) && (okJ == nil) {
-			// then change both strings to a number and compare them as numbers.
-			if isIntI && isIntJ {
-				if numberI == numberJ {
-					continue
-				} else {
-					if numberI < numberJ {
-						result = true
-						k = lenIndexI
-					} else {
-						result = false
-						k = lenIndexI
-					}
-				}
-			}
-			if isIntI && isFloat64J {
-				float32I = float64(numberI)
-				if float32I == float32J {
-					continue
-				} else {
-					if float32I < float32J {
-						result = true
-						k = lenIndexI
-					} else {
-						result = false
-						k = lenIndexI
-					}
-				}
-			}			
-			if isFloat64I && isIntJ {
-				float32J = float64(numberJ)
-				if float32I == float32J {
-					continue
-				} else {
-					if float32I < float32J {
-						result = true
-						k = lenIndexI
-					} else {
-						result = false
-						k = lenIndexI
-					}
-				}
-			}
-			if isFloat64I && isFloat64J {
-				if float32I == float32J {
-					continue
-				} else {
-					if float32I < float32J {
-						result = true
-						k = lenIndexI
-					} else {
-						result = false
-						k = lenIndexI
-					}
-				}
-			}			
-
-		} else {
-			// otherwise they can be compared as strings.
-			if t[i][k] == t[j][k] {
-				continue
-			} else {
-				if t[i][k] < t[j][k] {
-					result = true
-					k = lenIndexI - 1
-				} else {
-					result = false
-					k = lenIndexI - 1
-				}
-			}
-		}
-	}
-	return result
-}
-
-func (t dRow) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
-*/
-
 func (dt DataTable) String() string {
     sfmt := ""
 	//sfmt = "TABLE START\n"
 	/* Ignore the dataRowIndex value */
-	for _, dataRow := range dt.Table {
+	for _, dataRow := range dt.table {
 		sfmt = sfmt + strings.Join(dataRow, "|")
 		sfmt = sfmt + "\n"
 	}
@@ -412,7 +291,7 @@ func (dts DataTables) String() string {
 	for dataTableIndex, dataTable := range dts {
 		sfmt = sfmt + "TABLE " + strconv.Itoa(dataTableIndex) + " START\n"
 		/* Ignore the dataRowIndex value */
-		for _, dataRow := range dataTable.Table {
+		for _, dataRow := range dataTable.table {
 			sfmt = sfmt + strings.Join(dataRow, "|")
 			sfmt = sfmt + "\n"
 		}

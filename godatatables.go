@@ -60,6 +60,14 @@ func removeColumns(elements DataRow, columnIndexes []int) DataRow {
 	return result
 }
 
+func (dr DataRow) GetTableColumn(columnIndex int64) string {
+	return dr[columnIndex]
+}
+
+func (dt DataTable) GetTableRow(rowIndex int64) *DataRow {
+	return &dt.table[rowIndex]
+}
+
 // ToDo: DataTableReader
 func ReadTable(r io.Reader) (dt DataTable, err error) {
 	tableReader := csv.NewReader(r)
@@ -83,7 +91,8 @@ func NewDataTable(records [][]string) DataTable {
 			dr = append(dr, col)
 		}
 		dt.AppendRow(dr)
-		dt.rowCount++
+		// Disable adding to the rowCount because one is added in the AppendRow function.
+		// dt.rowCount++
 	}
 	return dt
 }

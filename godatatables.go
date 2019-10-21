@@ -110,6 +110,22 @@ func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable {
 	return &newDt
 }
 
+func (dt DataTable) Sum(index int64) (float64, error) {
+	var sum float64 = 0.0
+	var err error = nil
+
+	for _, dtRow := range dt.table {
+		colString := dtRow[index]
+		colValue, ok := strconv.ParseFloat(colString, 64)
+		if ok == nil {
+			sum = sum + colValue
+		} else {
+			return sum, err
+		}
+	}
+	return sum, err
+}
+
 func (dt *DataTable) AppendRow(dr DataRow) {
 	dt.table = append(dt.table, dr)
 	dt.rowCount++
@@ -215,14 +231,14 @@ func compareString(i string, j string, maxIndex int) (bool, int) {
 }
 
 func (dt *DataTable) sortRow(indexes []int) {
-// this is a comment
+	// this is a comment
 	sort.Slice(dt.table, func(i, j int) bool {
 		// fmt.Println(i, dt.Table[i][0], dt.Table[i][1], dt.Table[i][2], " : ", j, dt.Table[j][0], dt.Table[j][1], dt.Table[j][2])
 		var lenIndex int
 		if len(indexes) == 0 {
 			lenIndexI := len(dt.table[i])
 			lenIndexJ := len(dt.table[j])
-			lenIndex = int(math.Min(float64(lenIndexI),float64(lenIndexJ)))
+			lenIndex = int(math.Min(float64(lenIndexI), float64(lenIndexJ)))
 		} else {
 			lenIndex = len(indexes)
 		}
@@ -250,17 +266,17 @@ func (dt *DataTable) sortRow(indexes []int) {
 				valueI, valueJ = valueJ, valueI
 			}
 			// check for a float number
-			float32I, okI = strconv.ParseFloat(valueI,32)
+			float32I, okI = strconv.ParseFloat(valueI, 32)
 			if okI == nil {
 				isFloat64I = true
 			}
 			// check for a float number
-			float32J, okJ = strconv.ParseFloat(valueJ,32)
+			float32J, okJ = strconv.ParseFloat(valueJ, 32)
 			if okJ == nil {
 				isFloat64J = true
 			}
 			if isFloat64I && isFloat64J {
-				tmpResult, maxIndex := compareFloat64(float32I,float32J,lenIndex)
+				tmpResult, maxIndex := compareFloat64(float32I, float32J, lenIndex)
 				if maxIndex == -1 {
 					continue
 				} else {
@@ -269,7 +285,7 @@ func (dt *DataTable) sortRow(indexes []int) {
 				}
 			} else {
 				// otherwise they can be compared as strings.
-				tmpResult, maxIndex := compareString(valueI,valueJ,lenIndex)
+				tmpResult, maxIndex := compareString(valueI, valueJ, lenIndex)
 				if maxIndex == -1 {
 					continue
 				} else {
@@ -283,7 +299,7 @@ func (dt *DataTable) sortRow(indexes []int) {
 }
 
 func (dt DataTable) String() string {
-    sfmt := ""
+	sfmt := ""
 	//sfmt = "TABLE START\n"
 	/* Ignore the dataRowIndex value */
 	for _, dataRow := range dt.table {
@@ -313,4 +329,3 @@ func (dts DataTables) String() string {
 func (dtr DataRow) String() string {
 	return strings.Join(dtr, "|")
 }
-

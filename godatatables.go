@@ -110,6 +110,8 @@ func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable {
 	return &newDt
 }
 
+// Sum
+// Return the sum of the supplied index
 func (dt DataTable) Sum(index int64) (float64, error) {
 	var sum float64 = 0.0
 	var err error = nil

@@ -114,18 +114,17 @@ func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable {
 // Return the sum of the supplied index
 func (dt DataTable) Sum(index int64) (float64, error) {
 	var sum float64 = 0.0
-	var err error = nil
 
 	for _, dtRow := range dt.table {
 		colString := dtRow[index]
-		colValue, ok := strconv.ParseFloat(colString, 64)
-		if ok == nil {
+		colValue, err := strconv.ParseFloat(colString, 64)
+		if err == nil {
 			sum = sum + colValue
 		} else {
 			return sum, err
 		}
 	}
-	return sum, err
+	return sum, nil
 }
 
 func (dt *DataTable) AppendRow(dr DataRow) {

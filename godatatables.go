@@ -28,6 +28,8 @@ type JoinedColumn struct {
 	rightTableColumn int
 }
 
+type dRow []DataRow
+
 func removeOne(slice DataRow, s int) DataRow {
 	return append(slice[:s], slice[s+1:]...)
 }
@@ -197,7 +199,25 @@ func (dt *DataTable) Count() int64 {
 	return dt.rowCount
 }
 
-type dRow []DataRow
+
+func (a dRow) cmpDataTable(b dRow) bool {
+	return true
+}
+
+// Cmp
+// compare two data tables.
+// returns true if both tables are equal.
+func (a *DataTable) Cmp(b *DataTable) bool {
+	if (a.Count() == b.Count()) {
+		if (dRow(a.table).cmpDataTable(dRow(b.table))) {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
+}
 
 // compareFloat64 is a helper function for sortRow.
 // returns false and -1 if i ia equal to j

@@ -1,6 +1,5 @@
 // Package godatatables creates and manipulates data files in CSV format.
-// Date: Thursday 24 January 2019, 2:27 PM
-
+// Date: Monday 11 November 2019
 package godatatables
 
 import (
@@ -71,7 +70,7 @@ func (dt DataTable) GetTableRow(rowIndex int64) *DataRow {
 }
 
 // ToDo: DataTableReader
-func ReadTable(r io.Reader) (dt DataTable, err error) {
+func ReadTable(r io.Reader, header bool) (dt DataTable, err error) {
 	tableReader := csv.NewReader(r)
 	tableReader.Comma = '|'
 	tableReader.Comment = '#'
@@ -201,6 +200,22 @@ func (dt *DataTable) Count() int64 {
 
 
 func (a dRow) cmpDataTable(b dRow) bool {
+// if we call this function then assume the tables have the same number of rows.
+	for rowIndex := 0; rowIndex < len(a); rowIndex++ {
+		if (len(a[rowIndex]) != len(b[rowIndex])) {
+			return false
+		} else {
+			// to do: we need to check each element of the row in 'a' is the same as each element in 'b'.
+			aLen := len(a[rowIndex])
+			for elementIndex := 0; elementIndex < aLen; elementIndex++ {
+				if (a[rowIndex][elementIndex] == b[rowIndex][elementIndex]) {
+					continue
+				}
+				return false
+			}
+		}
+	}
+	// all the rows have the same number of elements and the values of the elements in each of the rows are the same in both slices of DataRow.
 	return true
 }
 
@@ -220,7 +235,7 @@ func (a *DataTable) Cmp(b *DataTable) bool {
 }
 
 // compareFloat64 is a helper function for sortRow.
-// returns false and -1 if i ia equal to j
+// returns false and -1 if i is equal to j
 // returns true and maxIndex if i is less than j
 // returns false and maxIndex if i is greater than j
 func compareFloat64(i float64, j float64, maxIndex int) (bool, int) {

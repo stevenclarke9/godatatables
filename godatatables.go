@@ -4,7 +4,7 @@ package godatatables
 
 import (
 	"encoding/csv"
-	// "fmt"
+	"fmt"
 	"io"
 	"math"
 	"sort"
@@ -12,10 +12,12 @@ import (
 	"strings"
 )
 
+type tableHeader []string
+
 type DataRow []string
 
 type DataTable struct {
-	header   []string
+	header   tableHeader
 	table    []DataRow
 	rowCount int64
 }
@@ -61,8 +63,8 @@ func removeColumns(elements DataRow, columnIndexes []int) DataRow {
 	return result
 }
 
-func (dr DataRow) GetTableColumn(columnIndex int64) string {
-	return dr[columnIndex]
+func (dr DataRow) GetTableColumn(fieldIndex int64) string {
+	return dr[fieldIndex]
 }
 
 func (dt DataTable) GetTableRow(rowIndex int64) *DataRow {
@@ -70,7 +72,7 @@ func (dt DataTable) GetTableRow(rowIndex int64) *DataRow {
 }
 
 // ToDo: DataTableReader
-func ReadTable(r io.Reader, header bool) (dt DataTable, err error) {
+func ReadTable(r io.Reader, hasHeader bool) (dt DataTable, err error) {
 	tableReader := csv.NewReader(r)
 	tableReader.Comma = '|'
 	tableReader.Comment = '#'
@@ -78,14 +80,26 @@ func ReadTable(r io.Reader, header bool) (dt DataTable, err error) {
 
 	stringsArray, err = tableReader.ReadAll()
 	if err == nil {
-		dt = NewDataTable(stringsArray)
+		if hasHeader {
+			stringsHeader := stringsArray[0]
+			stringsArray = stringsArray[1:]
+			dt = NewDataTable(stringsArray, false)
+			dt.header = stringsHeader
+		} else {
+			dt = NewDataTable(stringsArray, false)
+		}
 	}
 	return dt, err
 }
 
 // ToDo: DataTableWriter
-func NewDataTable(records [][]string) DataTable {
+func NewDataTable(records [][]string, hasHeader bool) DataTable {
 	dt := DataTable{header: []string{}, table: []DataRow{}, rowCount: 0}
+	if hasHeader {
+		stringsHeader := records[0]
+		records = records[1:]
+		dt.header = stringsHeader
+	}
 	for _, row := range records {
 		dr := DataRow{}
 		for _, col := range row {
@@ -100,7 +114,7 @@ func NewDataTable(records [][]string) DataTable {
 
 func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable {
 	newDt := DataTable{
-		header:   []string{},
+		header:   dt.header,
 		table:    []DataRow{},
 		rowCount: 0}
 	for _, dtRow := range dt.table {
@@ -183,7 +197,10 @@ func (dt *DataTable) Order(colIndexes []int) *DataTable {
 // The column index starts from 0 to number of columns in the "dt" DataTable less 1.
 // This func allows call chaining. eg. 	recs.Select([]int{0,2}).Select([]int{1})
 func (dt *DataTable) Select(colIndexes []int) *DataTable {
-	newDt := NewDataTable([][]string{})
+	newDt := NewDataTable([][]string{}, false)
+	if len(dt.header) > 0 {
+		newDt.header = dt.header
+	}
 	for _, dtRow := range dt.table {
 		newDtRow := DataRow{}
 		for _, colNumber := range colIndexes {
@@ -219,13 +236,36 @@ func (a dRow) cmpDataTable(b dRow) bool {
 	return true
 }
 
+
+func (a tableHeader) cmpHeader(b tableHeader) bool {
+	fmt.Println("a", a, "b", b)
+	if len(a) == len(b) {
+		for index := 0; index < len(a); index++ {
+			if (a[index] != b[index]) {
+				fmt.Println("a[",index,"] != b[",index,"]", a[index],"!=", b[index])
+				return false
+			}
+		}
+		return true
+	}
+	// the lenghs of a and b are not equal, so return false.
+	return false
+}
+
 // Cmp
 // compare two data tables.
 // returns true if both tables are equal.
 func (a *DataTable) Cmp(b *DataTable) bool {
 	if (a.Count() == b.Count()) {
-		if (dRow(a.table).cmpDataTable(dRow(b.table))) {
-			return true
+		fmt.Println("count equal")
+		if (a.header.cmpHeader(b.header)) {
+			fmt.Println("headers are equal")
+			if (dRow(a.table).cmpDataTable(dRow(b.table))) {
+				fmt.Println("rows are equal")
+				return true
+			} else {
+				return false
+			}
 		} else {
 			return false
 		}
@@ -338,6 +378,10 @@ func (dt DataTable) String() string {
 	sfmt := ""
 	//sfmt = "TABLE START\n"
 	/* Ignore the dataRowIndex value */
+	if (len(dt.header) > 0) {
+		sfmt = strings.Join(dt.header,"|")
+		sfmt = sfmt + "\n" + "----------" + "\n"
+	}
 	for _, dataRow := range dt.table {
 		sfmt = sfmt + strings.Join(dataRow, "|")
 		sfmt = sfmt + "\n"

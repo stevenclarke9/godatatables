@@ -188,6 +188,33 @@ func (dt *DataTable) Order(colIndexes []int) *DataTable {
 	return sortedDt
 }
 
+func (dt *DataTable) DistinctRows() *DataTable {
+	distinctTable := &DataTable{
+		header:   []string{},
+		table:    []DataRow{},
+		rowCount: 0}
+
+	// make a slice of row indexes
+	u := make([]int64, 0, len(dt.table))
+
+	// make a map of seen row indexes
+	m := make(map[string]int)
+
+	for dtRowIndex, dtRow := range dt.table {
+		rowString := string(dtRow.String()) 
+		if _, ok := m[rowString]; !ok {
+			m[rowString] = dtRowIndex
+			u = append(u, int64(dtRowIndex))
+		}
+	}
+	for _, v := range u {
+			distinctTable.table = append(distinctTable.table, dt.table[v])
+	}
+
+	return distinctTable
+
+}
+
 // Select returns a new DataTable that contains the selected columns from the "dt" DataTable.
 // The column index starts from 0 to number of columns in the "dt" DataTable less 1.
 // This func allows call chaining. eg. 	recs.Select([]int{0,2}).Select([]int{1})

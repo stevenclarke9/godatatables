@@ -35,8 +35,8 @@ type JoinedColumn struct {
 }
 
 
-func ReadTable(r io.Reader) (dt DataTable, err error)
-func NewDataTable(records [][]string) DataTable
+func ReadTable(r io.Reader, hasHeader bool) (dt DataTable, err error)
+func NewDataTable(records [][]string, hasHeader bool) DataTable
 func (dt *DataTable) Where(f func(dr DataRow) bool) *DataTable
 func (dt *DataTable) AppendRow(dr DataRow)
 func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexes []int, joinRightColumnIndexes []int, joinTable DataTable) *DataTable

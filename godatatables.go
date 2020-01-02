@@ -80,14 +80,9 @@ func ReadTable(r io.Reader, hasHeader bool) (dt DataTable, err error) {
 
 	stringsArray, err = tableReader.ReadAll()
 	if err == nil {
-		if hasHeader {
-			stringsHeader := stringsArray[0]
-			stringsArray = stringsArray[1:]
-			dt = NewDataTable(stringsArray, false)
-			dt.header = stringsHeader
-		} else {
-			dt = NewDataTable(stringsArray, false)
-		}
+		dt = NewDataTable(stringsArray, hasHeader)
+	} else {
+		dt = DataTable{header: []string{}, table: []DataRow{}, rowCount: -1}
 	}
 	return dt, err
 }

@@ -207,10 +207,13 @@ func (dt *DataTable) DistinctRows() *DataTable {
 			u = append(u, int64(dtRowIndex))
 		}
 	}
+	var rowcount int64 = 0
+
 	for _, v := range u {
+			rowcount++
 			distinctTable.table = append(distinctTable.table, dt.table[v])
 	}
-
+	distinctTable.rowCount = rowcount
 	return distinctTable
 
 }

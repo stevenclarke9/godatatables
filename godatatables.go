@@ -80,9 +80,14 @@ func ReadTable(r io.Reader, hasHeader bool) (dt DataTable, err error) {
 
 	stringsArray, err = tableReader.ReadAll()
 	if err == nil {
-		dt = NewDataTable(stringsArray, hasHeader)
-	} else {
-		dt = DataTable{header: []string{}, table: []DataRow{}, rowCount: -1}
+		if hasHeader {
+			stringsHeader := stringsArray[0]
+			stringsArray = stringsArray[1:]
+			dt = NewDataTable(stringsArray, false)
+			dt.header = stringsHeader
+		} else {
+			dt = NewDataTable(stringsArray, false)
+		}
 	}
 	return dt, err
 }
@@ -101,8 +106,6 @@ func NewDataTable(records [][]string, hasHeader bool) DataTable {
 			dr = append(dr, col)
 		}
 		dt.AppendRow(dr)
-		// Disable adding to the rowCount because one is added in the AppendRow function.
-		// dt.rowCount++
 	}
 	return dt
 }
@@ -147,36 +150,44 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 		header:   []string{},
 		table:    []DataRow{},
 		rowCount: 0}
-	lenLeftColumnIndexes := len(joinLeftColumnIndexes)
-	lenRightColumnIndexes := len(joinRightColumnIndexes)
 
-	if lenLeftColumnIndexes == lenRightColumnIndexes {
-		for _, leftTableRow := range dt.table {
-			colEqual := 0
-			for _, rightTableRow := range joinTable.table {
-				for colIndex, leftColNumber := range joinLeftColumnIndexes {
-					rightColNumber := joinRightColumnIndexes[colIndex]
-					if leftTableRow[leftColNumber] == rightTableRow[rightColNumber] {
-						colEqual = colEqual + 1
-					}
-				}
-				// fmt.Println("colEqual = ", colEqual)
-				if colEqual == lenLeftColumnIndexes {
-					// a = append(a[:i], a[i+1:]...)
-					tableRow := leftTableRow
-					if removeDuplicateColumns {
-						columnsRemovedTableRow := removeColumns(rightTableRow, joinRightColumnIndexes)
-						tableRow = append(tableRow, columnsRemovedTableRow[:]...)
-					} else {
-						tableRow = append(tableRow, rightTableRow[:]...)
-					}
-					dtJoined.AppendRow(tableRow)
-				}
-				colEqual = 0
-			}
-		}
-		return &dtJoined
+    checkedLeftColumnIndexes, IsValidLeftColumnIndexes := dt.validateColumnIndexes(joinLeftColumnIndexes)
+    checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
+
+    if IsValidLeftColumnIndexes && IsValidRightColumnIndexes {
+    	lenLeftColumnIndexes := len(checkedLeftColumnIndexes)
+	    lenRightColumnIndexes := len(checkedRightColumnIndexes)
+    	if lenLeftColumnIndexes == lenRightColumnIndexes {
+    		for _, leftTableRow := range dt.table {
+    			colEqual := 0
+    			for _, rightTableRow := range joinTable.table {
+    				for colIndex, leftColNumber := range checkedLeftColumnIndexes {
+    					rightColNumber := checkedRightColumnIndexes[colIndex]
+    					if leftTableRow[leftColNumber] == rightTableRow[rightColNumber] {
+    						colEqual = colEqual + 1
+    					}
+    				}
+    				// fmt.Println("colEqual = ", colEqual)
+    				if colEqual == lenLeftColumnIndexes {
+    					// a = append(a[:i], a[i+1:]...)
+    					tableRow := leftTableRow
+    					if removeDuplicateColumns {
+    						columnsRemovedTableRow := removeColumns(rightTableRow, checkedRightColumnIndexes)
+    						tableRow = append(tableRow, columnsRemovedTableRow[:]...)
+    					} else {
+    						tableRow = append(tableRow, rightTableRow[:]...)
+    					}
+    					dtJoined.AppendRow(tableRow)
+    				}
+    				colEqual = 0
+    			}
+    		}
+    		return &dtJoined
+    	} else {
+    		return nil
+    	}
 	} else {
+        // if both tables have invalid join indexes, return nil.
 		return nil
 	}
 }
@@ -188,34 +199,21 @@ func (dt *DataTable) Order(colIndexes []int) *DataTable {
 	return sortedDt
 }
 
-func (dt *DataTable) DistinctRows() *DataTable {
-	distinctTable := &DataTable{
-		header:   []string{},
-		table:    []DataRow{},
-		rowCount: 0}
+func (dt DataTable) validateColumnIndexes(colIndexes []int) (colIndexesChecked []int, colIndexesValid bool) {
+    dtRowLen := 0
+    if len(dt.table) > 0 {
+        dtRowLen = len(dt.table[0])
+    }
 
-	// make a slice of row indexes
-	u := make([]int64, 0, len(dt.table))
-
-	// make a map of seen row indexes
-	m := make(map[string]int)
-
-	for dtRowIndex, dtRow := range dt.table {
-		rowString := string(dtRow.String()) 
-		if _, ok := m[rowString]; !ok {
-			m[rowString] = dtRowIndex
-			u = append(u, int64(dtRowIndex))
-		}
-	}
-	var rowcount int64 = 0
-
-	for _, v := range u {
-			rowcount++
-			distinctTable.table = append(distinctTable.table, dt.table[v])
-	}
-	distinctTable.rowCount = rowcount
-	return distinctTable
-
+    colIndexesValid = false
+    colIndexesChecked = []int{}
+    for _, colNumber := range colIndexes {
+        if (colNumber >= 0) && (colNumber < dtRowLen) {
+            colIndexesChecked = append(colIndexesChecked, colNumber)
+            colIndexesValid = true
+        }
+    }
+    return colIndexesChecked, colIndexesValid
 }
 
 // Select returns a new DataTable that contains the selected columns from the "dt" DataTable.
@@ -226,13 +224,19 @@ func (dt *DataTable) Select(colIndexes []int) *DataTable {
 	if len(dt.header) > 0 {
 		newDt.header = dt.header
 	}
-	for _, dtRow := range dt.table {
-		newDtRow := DataRow{}
-		for _, colNumber := range colIndexes {
-			newDtRow = append(newDtRow, dtRow[colNumber])
-		}
-		newDt.table = append(newDt.table, newDtRow)
-	}
+    // silently remove invalid column index values.
+    // colIndexesValid is false when all values in the colIndexes array is invalid.
+    // Also colIndexesChecked becomes an empty array.
+    colIndexesChecked, colIndexesValid := dt.validateColumnIndexes(colIndexes)
+    if colIndexesValid {
+    	for _, dtRow := range dt.table {
+		    newDtRow := DataRow{}
+    		for _, colNumber := range colIndexesChecked {
+    			newDtRow = append(newDtRow, dtRow[colNumber])
+    		}
+            newDt.AppendRow(newDtRow)
+    	}
+    }
 	return &newDt
 }
 
@@ -281,6 +285,7 @@ func (a tableHeader) cmpHeader(b tableHeader) bool {
 // compare two data tables.
 // returns true if both tables are equal.
 func (a *DataTable) Cmp(b *DataTable) bool {
+	fmt.Println("a.Count",a.Count(),"b.Count",b.Count())
 	if (a.Count() == b.Count()) {
 		fmt.Println("count equal")
 		if (a.header.cmpHeader(b.header)) {

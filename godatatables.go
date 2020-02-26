@@ -1,10 +1,9 @@
 // Package godatatables creates and manipulates data files in CSV format.
-// Date: Monday 11 November 2019
 package godatatables
 
 import (
 	"encoding/csv"
-	"fmt"
+	// "fmt"
 	"io"
 	"math"
 	"sort"
@@ -150,6 +149,7 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 		header:   []string{},
 		table:    []DataRow{},
 		rowCount: 0}
+    emptyTable := dtJoined
 
     checkedLeftColumnIndexes, IsValidLeftColumnIndexes := dt.validateColumnIndexes(joinLeftColumnIndexes)
     checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
@@ -184,11 +184,11 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
     		}
     		return &dtJoined
     	} else {
-    		return nil
+    		return &emptyTable
     	}
 	} else {
         // if both tables have invalid join indexes, return nil.
-		return nil
+		return &emptyTable
 	}
 }
 
@@ -199,36 +199,96 @@ func (dt *DataTable) Order(colIndexes []int) *DataTable {
 	return sortedDt
 }
 
-func (dt DataTable) validateColumnIndexes(colIndexes []int) (colIndexesChecked []int, colIndexesValid bool) {
+func (dt *DataTable) validateColumnIndexes(colIndexes []int) ([]int, bool) {
     dtRowLen := 0
     if len(dt.table) > 0 {
         dtRowLen = len(dt.table[0])
     }
 
-    colIndexesValid = false
-    colIndexesChecked = []int{}
+    colIndexesValid := false
+    colIndexesChecked := []int{}
     for _, colNumber := range colIndexes {
         if (colNumber >= 0) && (colNumber < dtRowLen) {
             colIndexesChecked = append(colIndexesChecked, colNumber)
             colIndexesValid = true
+        } else {
+            colIndexesValid = false
+            break
         }
     }
     return colIndexesChecked, colIndexesValid
+}
+
+func findInStringSlice(name string, sliceNames []string) int {
+    for i := 0; i < len(sliceNames); i++ {
+        if sliceNames[i] == name {
+            return i
+        }
+    }
+    return -1
+}
+
+func (dt *DataTable) validateColumnNames(colNames []string) (colIndexesChecked []int, colIndexesValid bool) {
+    // fmt.Println("start validateColumnNames")
+    // fmt.Println("dt.header ",dt.header, "colNames ",colNames)
+    if len(dt.header) == 0 {
+        return []int{}, false
+    }
+
+    colIndexesValid = true
+    found := false
+    for i := 0; i < len(colNames); i++ {
+        ih := findInStringSlice(colNames[i],dt.header)
+        // fmt.Println("colNames[",i,"] =",colNames[i],"dt.header =",dt.header)
+        if ih > -1 {
+            // j is the header array index.
+            colIndexesChecked = append(colIndexesChecked,ih)
+            found = true
+        } else {
+            found = false
+            break
+        }
+    }
+    if found == false {
+        colIndexesValid = false
+    }
+    // fmt.Println("colIndexesvalid:", colIndexesValid)
+    // fmt.Println("colIndexesChecked:", colIndexesChecked)
+    // fmt.Println("exit validateColumnNames")
+
+    return colIndexesChecked, colIndexesValid
+
+}
+
+func (dt *DataTable) SelectByColumnNames(colNames []string) *DataTable {
+
+	newDt := NewDataTable([][]string{}, false)
+
+    colIndexesChecked, colIndexesValid := dt.validateColumnNames(colNames)
+    if colIndexesValid {
+        selectedDt := dt.Select(colIndexesChecked)
+        return selectedDt
+    }
+	return &newDt
 }
 
 // Select returns a new DataTable that contains the selected columns from the "dt" DataTable.
 // The column index starts from 0 to number of columns in the "dt" DataTable less 1.
 // This func allows call chaining. eg. 	recs.Select([]int{0,2}).Select([]int{1})
 func (dt *DataTable) Select(colIndexes []int) *DataTable {
+
 	newDt := NewDataTable([][]string{}, false)
-	if len(dt.header) > 0 {
-		newDt.header = dt.header
-	}
+
     // silently remove invalid column index values.
     // colIndexesValid is false when all values in the colIndexes array is invalid.
     // Also colIndexesChecked becomes an empty array.
     colIndexesChecked, colIndexesValid := dt.validateColumnIndexes(colIndexes)
     if colIndexesValid {
+    	if len(dt.header) > 0 {
+            for _, colNumber := range colIndexesChecked {
+                newDt.header = append(newDt.header, dt.header[colNumber])
+            }
+        }
     	for _, dtRow := range dt.table {
 		    newDtRow := DataRow{}
     		for _, colNumber := range colIndexesChecked {
@@ -238,6 +298,13 @@ func (dt *DataTable) Select(colIndexes []int) *DataTable {
     	}
     }
 	return &newDt
+}
+
+func (dt *DataTable) IsEmpty() bool {
+    if (len(dt.header) == 0) && (len(dt.table) == 0) {
+        return true
+    }
+    return false
 }
 
 func (dt *DataTable) Count() int64 {
@@ -251,7 +318,8 @@ func (a dRow) cmpDataTable(b dRow) bool {
 		if (len(a[rowIndex]) != len(b[rowIndex])) {
 			return false
 		} else {
-			// to do: we need to check each element of the row in 'a' is the same as each element in 'b'.
+            // to do: we need to check each element of the row in 'a' is the same as each element in 'b'.
+            // at the moment all element types are string.
 			aLen := len(a[rowIndex])
 			for elementIndex := 0; elementIndex < aLen; elementIndex++ {
 				if (a[rowIndex][elementIndex] == b[rowIndex][elementIndex]) {
@@ -267,11 +335,11 @@ func (a dRow) cmpDataTable(b dRow) bool {
 
 
 func (a tableHeader) cmpHeader(b tableHeader) bool {
-	fmt.Println("a", a, "b", b)
+	// fmt.Println("a", a, "b", b)
 	if len(a) == len(b) {
 		for index := 0; index < len(a); index++ {
 			if (a[index] != b[index]) {
-				fmt.Println("a[",index,"] != b[",index,"]", a[index],"!=", b[index])
+				// fmt.Println("a[",index,"] != b[",index,"]", a[index],"!=", b[index])
 				return false
 			}
 		}
@@ -285,13 +353,13 @@ func (a tableHeader) cmpHeader(b tableHeader) bool {
 // compare two data tables.
 // returns true if both tables are equal.
 func (a *DataTable) Cmp(b *DataTable) bool {
-	fmt.Println("a.Count",a.Count(),"b.Count",b.Count())
+	// fmt.Println("a.Count",a.Count(),"b.Count",b.Count())
 	if (a.Count() == b.Count()) {
-		fmt.Println("count equal")
+		// fmt.Println("count equal")
 		if (a.header.cmpHeader(b.header)) {
-			fmt.Println("headers are equal")
+			// fmt.Println("headers are equal")
 			if (dRow(a.table).cmpDataTable(dRow(b.table))) {
-				fmt.Println("rows are equal")
+				// fmt.Println("rows are equal")
 				return true
 			} else {
 				return false

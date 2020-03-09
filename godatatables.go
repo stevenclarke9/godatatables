@@ -241,7 +241,7 @@ func (dt *DataTable) validateColumnNames(colNames []string) (colIndexesChecked [
         ih := findInStringSlice(colNames[i],dt.header)
         // fmt.Println("colNames[",i,"] =",colNames[i],"dt.header =",dt.header)
         if ih > -1 {
-            // j is the header array index.
+            // the value of "ih" is the header array index.
             colIndexesChecked = append(colIndexesChecked,ih)
             found = true
         } else {
@@ -258,6 +258,17 @@ func (dt *DataTable) validateColumnNames(colNames []string) (colIndexesChecked [
 
     return colIndexesChecked, colIndexesValid
 
+}
+
+// IndexOfColumnName return -1 if it is a headerless table.
+// and return -1 if the column name is not found in the table header.
+func (dt *DataTable) IndexOfColumnName(colName string) int {
+    if len(dt.header) > 0 {
+        ih := findInStringSlice(colName,dt.header)
+        return ih
+    } else {
+        return -1
+    }
 }
 
 func (dt *DataTable) SelectByColumnNames(colNames []string) *DataTable {

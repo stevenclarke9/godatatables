@@ -2,7 +2,7 @@ package godatatables_test
 
 import (
 	"fmt"
-	"github.com/StevenClarke9/godatatables"
+	"godatatables"
 	"strings"
 	"testing"
 )
@@ -564,12 +564,6 @@ var tableB string = `a|b
 8|bb
 `
 
-	stringTableReader := strings.NewReader(stringTableWithHeader)
-	dataTableFromStringTableReader, err := godatatables.ReadTable(stringTableReader,false)
-
-	if err != nil {
-		t.Errorf("error recorded %s",err)
-	}
 
 	tableAReader := strings.NewReader(tableA)
 	dataTableFromTableAReader, err := godatatables.ReadTable(tableAReader,false)
@@ -584,10 +578,6 @@ var tableB string = `a|b
 	if err != nil {
 		t.Errorf("error recorded %s",err)
 	}
-
-	sprintDataTableFromStringTableReader := fmt.Sprint(dataTableFromStringTableReader)
-	printOrLog(t,"sprintDataTableFromStringTableReader:")
-	printOrLog(t,sprintDataTableFromStringTableReader)
 
     tableAjoinIndex := []int{0}
     fmt.Println("TableA join index =", tableAjoinIndex)
@@ -612,6 +602,61 @@ var tableB string = `a|b
 	    printOrLog(t,"sprintJoinedTable:")
     	printOrLog(t,sprintJoinedTable)
         t.Errorf("we shouldn't get here, thereis a problem with tableB joinIndex.")
+    }
+}
+
+func TestDataTableWhereConditionUsingIndexValues(t *testing.T) {
+var stringTableWithoutHeader string = `1|aa|bb|10
+2|aa|cc|15
+3|aa|ee|30
+4|aa|dd|60
+5|bb|cc|120
+6|bb|aa|240
+7|bb|ee|480
+8|bb|dd|960
+`
+
+var stringWhereResultWithoutHeader string = `2|aa|cc|15
+5|bb|cc|120
+`
+	stringTableReader := strings.NewReader(stringTableWithoutHeader)
+	dataTableFromStringTableReader, err := godatatables.ReadTable(stringTableReader,false)
+
+	whereResultTableReader := strings.NewReader(stringWhereResultWithoutHeader)
+	correctWhereResultDataTable, err := godatatables.ReadTable(whereResultTableReader,false)
+
+	if err != nil {
+		t.Errorf("error recorded %s",err)
+	}
+
+	sprintDataTableFromStringTableReader := fmt.Sprint(dataTableFromStringTableReader)
+	printOrLog(t,"sprintDataTableFromStringTableReader:")
+	printOrLog(t,sprintDataTableFromStringTableReader)
+
+	sprintCorrectWhereResultDataTable := fmt.Sprint(correctWhereResultDataTable)
+	printOrLog(t,"sprintCorrectWhereResultDataTable:")
+	printOrLog(t,sprintCorrectWhereResultDataTable)
+
+    columnValue := "cc"
+    columnIndex := 2
+    printOrLog(t,fmt.Sprint("column Index: ", columnIndex, " Value: ", columnValue))
+
+    whereFunc := func (dr godatatables.DataRow) bool {
+        if dr[columnIndex] == columnValue {
+            return true
+        } else {
+            return false
+        }
+    }
+
+    whereResultDataTable := dataTableFromStringTableReader.Where(whereFunc)
+
+    if whereResultDataTable.IsEmpty() == false {
+    	if ok := whereResultDataTable.Cmp(&correctWhereResultDataTable); !ok {
+    		t.Errorf("tables are not equal")
+    	}
+    } else {
+   	    t.Errorf("the joinedTable value IsEmpty")
     }
 }
 

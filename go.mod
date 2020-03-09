@@ -1,3 +1,3 @@
-module github.com/StevenClarke9/godatatables
+module godatatables
 
 go 1.13

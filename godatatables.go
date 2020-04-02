@@ -1,3 +1,6 @@
+// Copyright 2020 <stevenclarke2{AT}bigpond.com>. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 // Package godatatables creates and manipulates data files in CSV format.
 package godatatables
 
@@ -31,6 +34,10 @@ type JoinedColumn struct {
 type dRow []DataRow
 
 func removeOne(slice DataRow, s int) DataRow {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+func removeHeaderIndex(slice []string, s int) []string {
 	return append(slice[:s], slice[s+1:]...)
 }
 
@@ -153,6 +160,12 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 
     checkedLeftColumnIndexes, IsValidLeftColumnIndexes := dt.validateColumnIndexes(joinLeftColumnIndexes)
     checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
+
+    // joinedIndexNames := dt.header[joinLeftColumnIndexes[0]]
+    leftTableNames := dt.header
+    rightTableNames := removeHeaderIndex(joinTable.header,joinRightColumnIndexes[0])
+    dtJoined.header = append(dtJoined.header, leftTableNames...)
+    dtJoined.header = append(dtJoined.header, rightTableNames...)
 
     if IsValidLeftColumnIndexes && IsValidRightColumnIndexes {
     	lenLeftColumnIndexes := len(checkedLeftColumnIndexes)

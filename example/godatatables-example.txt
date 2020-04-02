@@ -1,0 +1,22 @@
+example processing of csv files with godatatables.
+
+We have two csv files. One is a list of pet owners and the other is a list of pets.
+
+owners.txt
+ID|Name|Location
+1|Steven|Brisbane
+2|Krissy|Brisbane
+3|Cathy|Sydney
+4|Peter|Melbourne
+
+pets.txt
+ID|OwnerID|Name|Type
+1|1|Chai|Dog
+2|2|Misha|Cat
+3|3|April|Cat
+4|4|Rodger|Dog
+
+these two files are created in the https://github.com/StevenClarke9/gotatatables/example directory.
+
+create a "petowners.go" file. This is the main package souce code file.
+

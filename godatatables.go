@@ -6,7 +6,7 @@ package godatatables
 
 import (
 	"encoding/csv"
-	// "fmt"
+	_ "fmt"
 	"io"
 	"math"
 	"sort"
@@ -33,12 +33,38 @@ type JoinedColumn struct {
 
 type dRow []DataRow
 
-func removeOne(slice DataRow, s int) DataRow {
-	return append(slice[:s], slice[s+1:]...)
+func removeOne(dr DataRow, s int) DataRow {
+    lenDr := len(dr)
+    newDr := make(DataRow,lenDr-1)
+    j, k := 0,0
+    for (j < lenDr) {
+        if j != s {
+            if k < (lenDr-1) {
+                newDr[k] = dr[j]
+                k = k + 1
+            }
+        }
+        j = j + 1
+    }
+	return newDr
+
+	// return append(slice[:s], slice[s+1:]...)
 }
 
-func removeHeaderIndex(slice []string, s int) []string {
-	return append(slice[:s], slice[s+1:]...)
+func removeHeaderIndex(s []string, i int) []string {
+    lenS := len(s)
+    newS := make([]string,lenS-1)
+    j, k := 0,0
+    for (j < lenS) {
+        if j != i {
+            if k < (lenS-1) {
+                newS[k] = s[j]
+                k = k + 1
+            }
+        }
+        j = j + 1
+    }
+	return newS
 }
 
 func removeColumns(elements DataRow, columnIndexes []int) DataRow {
@@ -162,11 +188,12 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
     checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
 
     // joinedIndexNames := dt.header[joinLeftColumnIndexes[0]]
-    leftTableNames := dt.header
-    rightTableNames := removeHeaderIndex(joinTable.header,joinRightColumnIndexes[0])
-    dtJoined.header = append(dtJoined.header, leftTableNames...)
-    dtJoined.header = append(dtJoined.header, rightTableNames...)
-
+    if len(dt.header) > 0 {
+        leftTableNames := dt.header
+        rightTableNames := removeHeaderIndex(joinTable.header,joinRightColumnIndexes[0])
+        dtJoined.header = append(dtJoined.header, leftTableNames...)
+        dtJoined.header = append(dtJoined.header, rightTableNames...)
+    }
     if IsValidLeftColumnIndexes && IsValidRightColumnIndexes {
     	lenLeftColumnIndexes := len(checkedLeftColumnIndexes)
 	    lenRightColumnIndexes := len(checkedRightColumnIndexes)

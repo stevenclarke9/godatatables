@@ -6,7 +6,7 @@ package godatatables
 
 import (
 	"encoding/csv"
-	_ "fmt"
+	"fmt"
 	"io"
 	"math"
 	"sort"
@@ -69,6 +69,34 @@ func removeHeaderIndex(s []string, i int) []string {
 
 func removeColumns(elements DataRow, columnIndexes []int) DataRow {
 	result := DataRow{}
+
+	elementsIndex := 0
+	lenElementsIndex := len(elements)
+	columnIndex := 0
+	lenColumnIndex := len(columnIndexes)
+
+	for elementsIndex < lenElementsIndex {
+		if columnIndex < lenColumnIndex {
+			if elementsIndex == columnIndexes[columnIndex] {
+				// skip.
+				columnIndex++
+			} else {
+				// append the element to the result
+				result = append(result, elements[elementsIndex])
+			}
+			elementsIndex++
+		} else {
+			// append the element to the result
+			result = append(result, elements[elementsIndex])
+			elementsIndex++
+		}
+	}
+	// Return the new slice.
+	return result
+}
+
+func removeHeaderColumns(elements []string, columnIndexes []int) []string {
+	result := []string{}
 
 	elementsIndex := 0
 	lenElementsIndex := len(elements)
@@ -188,15 +216,17 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
     checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
 
     // joinedIndexNames := dt.header[joinLeftColumnIndexes[0]]
-    lenDt := len(dt.header)
-    if lenDt > 0 {
-        leftTableNames := dt.header
-        rightTableNames := []string{}
-        for i := 0; i < lenDt; i++ {
-            rightTableNames = removeHeaderIndex(joinTable.header,joinRightColumnIndexes[i])
+    if removeDuplicateColumns {
+        lenDt := len(dt.header)
+        if lenDt > 0 {
+            leftTableNames := dt.header
+            rightTableNames := []string{}
+            fmt.Println("joinRightColumnIndexes",joinRightColumnIndexes)
+            rightTableNames = removeHeaderColumns(joinTable.header,joinRightColumnIndexes)
+            fmt.Println("rightTableNames",rightTableNames)
+            dtJoined.header = append(dtJoined.header, leftTableNames...)
+            dtJoined.header = append(dtJoined.header, rightTableNames...)
         }
-        dtJoined.header = append(dtJoined.header, leftTableNames...)
-        dtJoined.header = append(dtJoined.header, rightTableNames...)
     }
     if IsValidLeftColumnIndexes && IsValidRightColumnIndexes {
     	lenLeftColumnIndexes := len(checkedLeftColumnIndexes)

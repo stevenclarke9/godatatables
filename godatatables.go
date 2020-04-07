@@ -188,9 +188,13 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
     checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
 
     // joinedIndexNames := dt.header[joinLeftColumnIndexes[0]]
-    if len(dt.header) > 0 {
+    lenDt := len(dt.header)
+    if lenDt > 0 {
         leftTableNames := dt.header
-        rightTableNames := removeHeaderIndex(joinTable.header,joinRightColumnIndexes[0])
+        rightTableNames := []string{}
+        for i := 0; i < lenDt; i++ {
+            rightTableNames = removeHeaderIndex(joinTable.header,joinRightColumnIndexes[i])
+        }
         dtJoined.header = append(dtJoined.header, leftTableNames...)
         dtJoined.header = append(dtJoined.header, rightTableNames...)
     }

@@ -396,6 +396,79 @@ var sourceJoinTableA string = `a|b
 
 }
 
+func TestJoinDataTablesWithMultipleValidColumnIndexValues(t *testing.T) {
+
+var sourceJoinTableB string = `a|b|c|value
+1|aa|bb|10
+2|aa|cc|15
+3|aa|ee|30
+4|aa|dd|60
+5|bb|cc|120
+6|bb|aa|240
+7|bb|ee|480
+8|bb|dd|960
+`
+
+var sourceJoinTableA string = `a|b
+1|aa
+2|aa
+3|aa
+4|aa
+5|bb
+6|bb
+7|bb
+8|bb
+`
+
+	stringTableReader := strings.NewReader(stringTableWithHeader)
+	dataTableFromStringTableReader, err := godatatables.ReadTable(stringTableReader,false)
+
+	if err != nil {
+		t.Errorf("error recorded %s",err)
+	}
+
+	tableAReader := strings.NewReader(sourceJoinTableA)
+	dataTableFromTableAReader, err := godatatables.ReadTable(tableAReader,false)
+
+	if err != nil {
+		t.Errorf("error recorded %s",err)
+	}
+
+	tableBReader := strings.NewReader(sourceJoinTableB)
+	dataTableFromTableBReader, err := godatatables.ReadTable(tableBReader,false)
+
+	if err != nil {
+		t.Errorf("error recorded %s",err)
+	}
+
+	sprintDataTableFromStringTableReader := fmt.Sprint(dataTableFromStringTableReader)
+	printOrLog(t,"sprintDataTableFromStringTableReader:")
+	printOrLog(t,sprintDataTableFromStringTableReader)
+
+	sprintDataTableFromTableAReader := fmt.Sprint(dataTableFromTableAReader)
+	printOrLog(t,"sprintDataTableFromTableAReader:")
+	printOrLog(t,sprintDataTableFromTableAReader)
+
+	sprintDataTableFromTableBReader := fmt.Sprint(dataTableFromTableBReader)
+	printOrLog(t,"sprintDataTableFromTableBReader:")
+	printOrLog(t,sprintDataTableFromTableBReader)
+
+    joinedTable := dataTableFromTableAReader.InnerJoin(true, []int{0,1}, []int{0,1}, dataTableFromTableBReader)
+
+	sprintJoinedTable := fmt.Sprint(joinedTable)
+	printOrLog(t,"sprintJoinedTable:")
+	printOrLog(t,sprintJoinedTable)
+
+    if joinedTable.IsEmpty() == false {
+    	if ok := joinedTable.Cmp(&dataTableFromStringTableReader); !ok {
+    		t.Errorf("tables are not equal")
+    	}
+    } else {
+   	    t.Errorf("the joinedTable value IsEmpty")
+    }
+
+}
+
 func TestJoinDataTablesWithInvalidColumnIndexValues(t *testing.T) {
 var tableA string = `a|c|value
 1|bb|10
@@ -515,9 +588,9 @@ var tableB string = `a|b
 	printOrLog(t,sprintDataTableFromStringTableReader)
 
     tableAjoinIndex := []int{-1}
-    fmt.Println("TableA join index =", tableAjoinIndex)
+    printOrLog(t,fmt.Sprint("TableA join index =", tableAjoinIndex))
     tableBjoinIndex := []int{0}
-    fmt.Println("TableB join index =", tableBjoinIndex)
+    printOrLog(t,fmt.Sprint("TableB join index =", tableBjoinIndex))
 
 	sprintDataTableFromTableAReader := fmt.Sprint(dataTableFromTableAReader)
 	printOrLog(t,"sprintDataTableFromTableAReader:")
@@ -580,9 +653,9 @@ var tableB string = `a|b
 	}
 
     tableAjoinIndex := []int{0}
-    fmt.Println("TableA join index =", tableAjoinIndex)
+    printOrLog(t,fmt.Sprint("TableA join index =", tableAjoinIndex))
     tableBjoinIndex := []int{-2}
-    fmt.Println("TableB join index =", tableBjoinIndex)
+    printOrLog(t,fmt.Sprint("TableB join index =", tableBjoinIndex))
 
 	sprintDataTableFromTableAReader := fmt.Sprint(dataTableFromTableAReader)
 	printOrLog(t,"sprintDataTableFromTableAReader:")

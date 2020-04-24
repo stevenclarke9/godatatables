@@ -6,7 +6,7 @@ package godatatables
 
 import (
 	"encoding/csv"
-	"fmt"
+	// "fmt"
 	"io"
 	"math"
 	"sort"
@@ -97,7 +97,7 @@ func removeColumns(elements DataRow, columnIndexes []int) DataRow {
 
 func removeHeaderColumns(elements []string, columnIndexes []int) []string {
     header := elements
-    for i < len(columnIndexes) {    
+    for i := 0; i < len(columnIndexes); i++ {    
         header = removeHeaderIndex(header,columnIndexes[i])
     }
 	// Return the new slice.

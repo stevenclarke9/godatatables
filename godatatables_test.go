@@ -221,7 +221,7 @@ func TestSelectDataTableColumnsWithNoHeader(t *testing.T) {
 	printOrLog(t,sprintDataTableFromStringSelectedColumnsTableReader)
 
     dataTableSelectedColumns := dataTableFromStringTableReader.Select([]int{0,2,3})
-    fmt.Println("dataTableSelectedColunms row count =",dataTableSelectedColumns.Count())
+    printOrLog(t,fmt.Sprint("dataTableSelectedColumns row count =",dataTableSelectedColumns.Count()))
 	sprintDataTableSelectedColumns := fmt.Sprint(dataTableSelectedColumns)
 	printOrLog(t,"sprintDataTableSelectedColumns:")
 	printOrLog(t,sprintDataTableSelectedColumns)

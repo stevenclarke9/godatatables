@@ -96,31 +96,12 @@ func removeColumns(elements DataRow, columnIndexes []int) DataRow {
 }
 
 func removeHeaderColumns(elements []string, columnIndexes []int) []string {
-	result := []string{}
-
-	elementsIndex := 0
-	lenElementsIndex := len(elements)
-	columnIndex := 0
-	lenColumnIndex := len(columnIndexes)
-
-	for elementsIndex < lenElementsIndex {
-		if columnIndex < lenColumnIndex {
-			if elementsIndex == columnIndexes[columnIndex] {
-				// skip.
-				columnIndex++
-			} else {
-				// append the element to the result
-				result = append(result, elements[elementsIndex])
-			}
-			elementsIndex++
-		} else {
-			// append the element to the result
-			result = append(result, elements[elementsIndex])
-			elementsIndex++
-		}
-	}
+    header := elements
+    for i < len(columnIndexes) {    
+        header = removeHeaderIndex(header,columnIndexes[i])
+    }
 	// Return the new slice.
-	return result
+	return header
 }
 
 func (dr DataRow) GetTableColumn(fieldIndex int64) string {
@@ -160,12 +141,18 @@ func NewDataTable(records [][]string, hasHeader bool) DataTable {
 		records = records[1:]
 		dt.header = stringsHeader
 	}
-	for _, row := range records {
-		dr := DataRow{}
-		for _, col := range row {
-			dr = append(dr, col)
+    dt.table = make([]DataRow,len(records))
+    for i := 0; i < len(records); i++ {
+	//for _, row := range records {
+        dr := make(DataRow,len(records[i]))
+        for j := 0; j < len(records[i]); j++ {
+		//for _, col := range row {
+		//	dr = append(dr, col)
+            dr[j] = records[i][j]
 		}
-		dt.AppendRow(dr)
+        dt.table[i] = dr
+        dt.rowCount++
+		//dt.AppendRow(dr)
 	}
 	return dt
 }
@@ -215,15 +202,14 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
     checkedLeftColumnIndexes, IsValidLeftColumnIndexes := dt.validateColumnIndexes(joinLeftColumnIndexes)
     checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
 
-    // joinedIndexNames := dt.header[joinLeftColumnIndexes[0]]
     if removeDuplicateColumns {
         lenDt := len(dt.header)
         if lenDt > 0 {
             leftTableNames := dt.header
             rightTableNames := []string{}
-            fmt.Println("joinRightColumnIndexes",joinRightColumnIndexes)
+            // fmt.Println("joinRightColumnIndexes",joinRightColumnIndexes)
             rightTableNames = removeHeaderColumns(joinTable.header,joinRightColumnIndexes)
-            fmt.Println("rightTableNames",rightTableNames)
+            // fmt.Println("rightTableNames",rightTableNames)
             dtJoined.header = append(dtJoined.header, leftTableNames...)
             dtJoined.header = append(dtJoined.header, rightTableNames...)
         }
@@ -271,6 +257,36 @@ func (dt *DataTable) Order(colIndexes []int) *DataTable {
 	sortedDt := dt
 	sortedDt.sortRow(colIndexes)
 	return sortedDt
+}
+
+func (dt *DataTable) DistinctRows() *DataTable {
+	distinctTable := &DataTable{
+		header:   []string{},
+		table:    []DataRow{},
+		rowCount: 0}
+
+	// make a slice of row indexes
+	u := make([]int64, 0, len(dt.table))
+
+	// make a map of seen row indexes
+	m := make(map[string]int)
+
+	for dtRowIndex, dtRow := range dt.table {
+		rowString := string(dtRow.String()) 
+		if _, ok := m[rowString]; !ok {
+			m[rowString] = dtRowIndex
+			u = append(u, int64(dtRowIndex))
+		}
+	}
+	var rowcount int64 = 0
+
+	for _, v := range u {
+			rowcount++
+			distinctTable.table = append(distinctTable.table, dt.table[v])
+	}
+	distinctTable.rowCount = rowcount
+	return distinctTable
+
 }
 
 func (dt *DataTable) validateColumnIndexes(colIndexes []int) ([]int, bool) {

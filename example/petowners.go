@@ -3,9 +3,7 @@ package main
 import (
     "fmt"
     "os"
-
-    "godatatables"
-    // "github.com/StevenClarke9/godatatables"
+    "github.com/StevenClarke9/godatatables"
 )
 
 func readFile(fileName string, hasHeader bool) (dt godatatables.DataTable, err error) {

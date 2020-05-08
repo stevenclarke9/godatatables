@@ -2,7 +2,7 @@ package godatatables_test
 
 import (
 	"fmt"
-	"godatatables"
+	"github.com/StevenClarke9/godatatables"
 	"strings"
 	"testing"
 )

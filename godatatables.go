@@ -325,21 +325,16 @@ func (dt *DataTable) validateColumnNames(colNames []string) (colIndexesChecked [
 	}
 
 	colIndexesValid = true
-	found := false
 	for i := 0; i < len(colNames); i++ {
 		ih := findInStringSlice(colNames[i], dt.header)
 		// fmt.Println("colNames[",i,"] =",colNames[i],"dt.header =",dt.header)
 		if ih > -1 {
 			// the value of "ih" is the header array index.
 			colIndexesChecked = append(colIndexesChecked, ih)
-			found = true
 		} else {
-			found = false
+			colIndexesValid = false
 			break
 		}
-	}
-	if found == false {
-		colIndexesValid = false
 	}
 	// fmt.Println("colIndexesvalid:", colIndexesValid)
 	// fmt.Println("colIndexesChecked:", colIndexesChecked)

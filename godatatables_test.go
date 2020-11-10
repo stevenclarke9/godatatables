@@ -281,7 +281,7 @@ func TestSelectDataTableColumnsWithInvalidColumnNames(t *testing.T) {
 
 	printOrLog(t, fmt.Sprint("dataTableSelectedColunms row count = ", dataTableSelectedColumns.Count()))
 
-	if dataTableSelectedColumns.Count() != 0 {
+	if dataTableSelectedColumns.IsEmpty() == false {
 		sprintDataTableSelectedColumns := fmt.Sprint(dataTableSelectedColumns)
 		printOrLog(t, "sprintDataTableSelectedColumns:")
 		printOrLog(t, sprintDataTableSelectedColumns)

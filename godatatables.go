@@ -34,36 +34,36 @@ type JoinedColumn struct {
 type dRow []DataRow
 
 func removeOne(dr DataRow, s int) DataRow {
-    lenDr := len(dr)
-    newDr := make(DataRow,lenDr-1)
-    j, k := 0,0
-    for (j < lenDr) {
-        if j != s {
-            if k < (lenDr-1) {
-                newDr[k] = dr[j]
-                k = k + 1
-            }
-        }
-        j = j + 1
-    }
+	lenDr := len(dr)
+	newDr := make(DataRow, lenDr-1)
+	j, k := 0, 0
+	for j < lenDr {
+		if j != s {
+			if k < (lenDr - 1) {
+				newDr[k] = dr[j]
+				k = k + 1
+			}
+		}
+		j = j + 1
+	}
 	return newDr
 
 	// return append(slice[:s], slice[s+1:]...)
 }
 
 func removeHeaderIndex(s []string, i int) []string {
-    lenS := len(s)
-    newS := make([]string,lenS-1)
-    j, k := 0,0
-    for (j < lenS) {
-        if j != i {
-            if k < (lenS-1) {
-                newS[k] = s[j]
-                k = k + 1
-            }
-        }
-        j = j + 1
-    }
+	lenS := len(s)
+	newS := make([]string, lenS-1)
+	j, k := 0, 0
+	for j < lenS {
+		if j != i {
+			if k < (lenS - 1) {
+				newS[k] = s[j]
+				k = k + 1
+			}
+		}
+		j = j + 1
+	}
 	return newS
 }
 
@@ -96,10 +96,10 @@ func removeColumns(elements DataRow, columnIndexes []int) DataRow {
 }
 
 func removeHeaderColumns(elements []string, columnIndexes []int) []string {
-    header := elements
-    for i := 0; i < len(columnIndexes); i++ {    
-        header = removeHeaderIndex(header,columnIndexes[i])
-    }
+	header := elements
+	for i := 0; i < len(columnIndexes); i++ {
+		header = removeHeaderIndex(header, columnIndexes[i])
+	}
 	// Return the new slice.
 	return header
 }
@@ -137,21 +137,20 @@ func ReadTable(r io.Reader, hasHeader bool) (dt DataTable, err error) {
 func NewDataTable(records [][]string, hasHeader bool) DataTable {
 	dt := DataTable{header: []string{}, table: []DataRow{}, rowCount: 0}
 	if hasHeader {
-		stringsHeader := records[0]
+		dt.header = records[0]
 		records = records[1:]
-		dt.header = stringsHeader
 	}
-    dt.table = make([]DataRow,len(records))
-    for i := 0; i < len(records); i++ {
-	//for _, row := range records {
-        dr := make(DataRow,len(records[i]))
-        for j := 0; j < len(records[i]); j++ {
-		//for _, col := range row {
-		//	dr = append(dr, col)
-            dr[j] = records[i][j]
+	dt.table = make([]DataRow, len(records))
+	for i := 0; i < len(records); i++ {
+		//for _, row := range records {
+		dr := make(DataRow, len(records[i]))
+		for j := 0; j < len(records[i]); j++ {
+			//for _, col := range row {
+			//	dr = append(dr, col)
+			dr[j] = records[i][j]
 		}
-        dt.table[i] = dr
-        dt.rowCount++
+		dt.table[i] = dr
+		dt.rowCount++
 		//dt.AppendRow(dr)
 	}
 	return dt
@@ -197,57 +196,57 @@ func (dt *DataTable) InnerJoin(removeDuplicateColumns bool, joinLeftColumnIndexe
 		header:   []string{},
 		table:    []DataRow{},
 		rowCount: 0}
-    emptyTable := dtJoined
+	emptyTable := dtJoined
 
-    checkedLeftColumnIndexes, IsValidLeftColumnIndexes := dt.validateColumnIndexes(joinLeftColumnIndexes)
-    checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
+	checkedLeftColumnIndexes, IsValidLeftColumnIndexes := dt.validateColumnIndexes(joinLeftColumnIndexes)
+	checkedRightColumnIndexes, IsValidRightColumnIndexes := dt.validateColumnIndexes(joinRightColumnIndexes)
 
-    if removeDuplicateColumns {
-        lenDt := len(dt.header)
-        if lenDt > 0 {
-            leftTableNames := dt.header
-            rightTableNames := []string{}
-            // fmt.Println("joinRightColumnIndexes",joinRightColumnIndexes)
-            rightTableNames = removeHeaderColumns(joinTable.header,joinRightColumnIndexes)
-            // fmt.Println("rightTableNames",rightTableNames)
-            dtJoined.header = append(dtJoined.header, leftTableNames...)
-            dtJoined.header = append(dtJoined.header, rightTableNames...)
-        }
-    }
-    if IsValidLeftColumnIndexes && IsValidRightColumnIndexes {
-    	lenLeftColumnIndexes := len(checkedLeftColumnIndexes)
-	    lenRightColumnIndexes := len(checkedRightColumnIndexes)
-    	if lenLeftColumnIndexes == lenRightColumnIndexes {
-    		for _, leftTableRow := range dt.table {
-    			colEqual := 0
-    			for _, rightTableRow := range joinTable.table {
-    				for colIndex, leftColNumber := range checkedLeftColumnIndexes {
-    					rightColNumber := checkedRightColumnIndexes[colIndex]
-    					if leftTableRow[leftColNumber] == rightTableRow[rightColNumber] {
-    						colEqual = colEqual + 1
-    					}
-    				}
-    				// fmt.Println("colEqual = ", colEqual)
-    				if colEqual == lenLeftColumnIndexes {
-    					// a = append(a[:i], a[i+1:]...)
-    					tableRow := leftTableRow
-    					if removeDuplicateColumns {
-    						columnsRemovedTableRow := removeColumns(rightTableRow, checkedRightColumnIndexes)
-    						tableRow = append(tableRow, columnsRemovedTableRow[:]...)
-    					} else {
-    						tableRow = append(tableRow, rightTableRow[:]...)
-    					}
-    					dtJoined.AppendRow(tableRow)
-    				}
-    				colEqual = 0
-    			}
-    		}
-    		return &dtJoined
-    	} else {
-    		return &emptyTable
-    	}
+	if removeDuplicateColumns {
+		lenDt := len(dt.header)
+		if lenDt > 0 {
+			leftTableNames := dt.header
+			rightTableNames := []string{}
+			// fmt.Println("joinRightColumnIndexes",joinRightColumnIndexes)
+			rightTableNames = removeHeaderColumns(joinTable.header, joinRightColumnIndexes)
+			// fmt.Println("rightTableNames",rightTableNames)
+			dtJoined.header = append(dtJoined.header, leftTableNames...)
+			dtJoined.header = append(dtJoined.header, rightTableNames...)
+		}
+	}
+	if IsValidLeftColumnIndexes && IsValidRightColumnIndexes {
+		lenLeftColumnIndexes := len(checkedLeftColumnIndexes)
+		lenRightColumnIndexes := len(checkedRightColumnIndexes)
+		if lenLeftColumnIndexes == lenRightColumnIndexes {
+			for _, leftTableRow := range dt.table {
+				colEqual := 0
+				for _, rightTableRow := range joinTable.table {
+					for colIndex, leftColNumber := range checkedLeftColumnIndexes {
+						rightColNumber := checkedRightColumnIndexes[colIndex]
+						if leftTableRow[leftColNumber] == rightTableRow[rightColNumber] {
+							colEqual = colEqual + 1
+						}
+					}
+					// fmt.Println("colEqual = ", colEqual)
+					if colEqual == lenLeftColumnIndexes {
+						// a = append(a[:i], a[i+1:]...)
+						tableRow := leftTableRow
+						if removeDuplicateColumns {
+							columnsRemovedTableRow := removeColumns(rightTableRow, checkedRightColumnIndexes)
+							tableRow = append(tableRow, columnsRemovedTableRow[:]...)
+						} else {
+							tableRow = append(tableRow, rightTableRow[:]...)
+						}
+						dtJoined.AppendRow(tableRow)
+					}
+					colEqual = 0
+				}
+			}
+			return &dtJoined
+		} else {
+			return &emptyTable
+		}
 	} else {
-        // if both tables have invalid join indexes, return nil.
+		// if both tables have invalid join indexes, return nil.
 		return &emptyTable
 	}
 }
@@ -272,7 +271,7 @@ func (dt *DataTable) DistinctRows() *DataTable {
 	m := make(map[string]int)
 
 	for dtRowIndex, dtRow := range dt.table {
-		rowString := string(dtRow.String()) 
+		rowString := string(dtRow.String())
 		if _, ok := m[rowString]; !ok {
 			m[rowString] = dtRowIndex
 			u = append(u, int64(dtRowIndex))
@@ -281,8 +280,8 @@ func (dt *DataTable) DistinctRows() *DataTable {
 	var rowcount int64 = 0
 
 	for _, v := range u {
-			rowcount++
-			distinctTable.table = append(distinctTable.table, dt.table[v])
+		rowcount++
+		distinctTable.table = append(distinctTable.table, dt.table[v])
 	}
 	distinctTable.rowCount = rowcount
 	return distinctTable
@@ -290,86 +289,86 @@ func (dt *DataTable) DistinctRows() *DataTable {
 }
 
 func (dt *DataTable) validateColumnIndexes(colIndexes []int) ([]int, bool) {
-    dtRowLen := 0
-    if len(dt.table) > 0 {
-        dtRowLen = len(dt.table[0])
-    }
+	dtRowLen := 0
+	if len(dt.table) > 0 {
+		dtRowLen = len(dt.table[0])
+	}
 
-    colIndexesValid := false
-    colIndexesChecked := []int{}
-    for _, colNumber := range colIndexes {
-        if (colNumber >= 0) && (colNumber < dtRowLen) {
-            colIndexesChecked = append(colIndexesChecked, colNumber)
-            colIndexesValid = true
-        } else {
-            colIndexesValid = false
-            break
-        }
-    }
-    return colIndexesChecked, colIndexesValid
+	colIndexesValid := false
+	colIndexesChecked := []int{}
+	for _, colNumber := range colIndexes {
+		if (colNumber >= 0) && (colNumber < dtRowLen) {
+			colIndexesChecked = append(colIndexesChecked, colNumber)
+			colIndexesValid = true
+		} else {
+			colIndexesValid = false
+			break
+		}
+	}
+	return colIndexesChecked, colIndexesValid
 }
 
 func findInStringSlice(name string, sliceNames []string) int {
-    for i := 0; i < len(sliceNames); i++ {
-        if sliceNames[i] == name {
-            return i
-        }
-    }
-    return -1
+	for i := 0; i < len(sliceNames); i++ {
+		if sliceNames[i] == name {
+			return i
+		}
+	}
+	return -1
 }
 
 func (dt *DataTable) validateColumnNames(colNames []string) (colIndexesChecked []int, colIndexesValid bool) {
-    // fmt.Println("start validateColumnNames")
-    // fmt.Println("dt.header ",dt.header, "colNames ",colNames)
-    if len(dt.header) == 0 {
-        return []int{}, false
-    }
+	// fmt.Println("start validateColumnNames")
+	// fmt.Println("dt.header ",dt.header, "colNames ",colNames)
+	if len(dt.header) == 0 {
+		return []int{}, false
+	}
 
-    colIndexesValid = true
-    found := false
-    for i := 0; i < len(colNames); i++ {
-        ih := findInStringSlice(colNames[i],dt.header)
-        // fmt.Println("colNames[",i,"] =",colNames[i],"dt.header =",dt.header)
-        if ih > -1 {
-            // the value of "ih" is the header array index.
-            colIndexesChecked = append(colIndexesChecked,ih)
-            found = true
-        } else {
-            found = false
-            break
-        }
-    }
-    if found == false {
-        colIndexesValid = false
-    }
-    // fmt.Println("colIndexesvalid:", colIndexesValid)
-    // fmt.Println("colIndexesChecked:", colIndexesChecked)
-    // fmt.Println("exit validateColumnNames")
+	colIndexesValid = true
+	found := false
+	for i := 0; i < len(colNames); i++ {
+		ih := findInStringSlice(colNames[i], dt.header)
+		// fmt.Println("colNames[",i,"] =",colNames[i],"dt.header =",dt.header)
+		if ih > -1 {
+			// the value of "ih" is the header array index.
+			colIndexesChecked = append(colIndexesChecked, ih)
+			found = true
+		} else {
+			found = false
+			break
+		}
+	}
+	if found == false {
+		colIndexesValid = false
+	}
+	// fmt.Println("colIndexesvalid:", colIndexesValid)
+	// fmt.Println("colIndexesChecked:", colIndexesChecked)
+	// fmt.Println("exit validateColumnNames")
 
-    return colIndexesChecked, colIndexesValid
+	return colIndexesChecked, colIndexesValid
 
 }
 
 // IndexOfColumnName return -1 if it is a headerless table.
 // and return -1 if the column name is not found in the table header.
 func (dt *DataTable) IndexOfColumnName(colName string) int {
-    if len(dt.header) > 0 {
-        ih := findInStringSlice(colName,dt.header)
-        return ih
-    } else {
-        return -1
-    }
+	if len(dt.header) > 0 {
+		ih := findInStringSlice(colName, dt.header)
+		return ih
+	} else {
+		return -1
+	}
 }
 
 func (dt *DataTable) SelectByColumnNames(colNames []string) *DataTable {
 
 	newDt := NewDataTable([][]string{}, false)
 
-    colIndexesChecked, colIndexesValid := dt.validateColumnNames(colNames)
-    if colIndexesValid {
-        selectedDt := dt.Select(colIndexesChecked)
-        return selectedDt
-    }
+	colIndexesChecked, colIndexesValid := dt.validateColumnNames(colNames)
+	if colIndexesValid {
+		selectedDt := dt.Select(colIndexesChecked)
+		return selectedDt
+	}
 	return &newDt
 }
 
@@ -380,50 +379,49 @@ func (dt *DataTable) Select(colIndexes []int) *DataTable {
 
 	newDt := NewDataTable([][]string{}, false)
 
-    // silently remove invalid column index values.
-    // colIndexesValid is false when all values in the colIndexes array is invalid.
-    // Also colIndexesChecked becomes an empty array.
-    colIndexesChecked, colIndexesValid := dt.validateColumnIndexes(colIndexes)
-    if colIndexesValid {
-    	if len(dt.header) > 0 {
-            for _, colNumber := range colIndexesChecked {
-                newDt.header = append(newDt.header, dt.header[colNumber])
-            }
-        }
-    	for _, dtRow := range dt.table {
-		    newDtRow := DataRow{}
-    		for _, colNumber := range colIndexesChecked {
-    			newDtRow = append(newDtRow, dtRow[colNumber])
-    		}
-            newDt.AppendRow(newDtRow)
-    	}
-    }
+	// silently remove invalid column index values.
+	// colIndexesValid is false when all values in the colIndexes array is invalid.
+	// Also colIndexesChecked becomes an empty array.
+	colIndexesChecked, colIndexesValid := dt.validateColumnIndexes(colIndexes)
+	if colIndexesValid {
+		if len(dt.header) > 0 {
+			for _, colNumber := range colIndexesChecked {
+				newDt.header = append(newDt.header, dt.header[colNumber])
+			}
+		}
+		for _, dtRow := range dt.table {
+			newDtRow := DataRow{}
+			for _, colNumber := range colIndexesChecked {
+				newDtRow = append(newDtRow, dtRow[colNumber])
+			}
+			newDt.AppendRow(newDtRow)
+		}
+	}
 	return &newDt
 }
 
 func (dt *DataTable) IsEmpty() bool {
-    if (len(dt.header) == 0) && (len(dt.table) == 0) {
-        return true
-    }
-    return false
+	if (len(dt.header) == 0) && (len(dt.table) == 0) {
+		return true
+	}
+	return false
 }
 
 func (dt *DataTable) Count() int64 {
 	return dt.rowCount
 }
 
-
 func (a dRow) cmpDataTable(b dRow) bool {
-// if we call this function then assume the tables have the same number of rows.
+	// if we call this function then assume the tables have the same number of rows.
 	for rowIndex := 0; rowIndex < len(a); rowIndex++ {
-		if (len(a[rowIndex]) != len(b[rowIndex])) {
+		if len(a[rowIndex]) != len(b[rowIndex]) {
 			return false
 		} else {
-            // to do: we need to check each element of the row in 'a' is the same as each element in 'b'.
-            // at the moment all element types are string.
+			// to do: we need to check each element of the row in 'a' is the same as each element in 'b'.
+			// at the moment all element types are string.
 			aLen := len(a[rowIndex])
 			for elementIndex := 0; elementIndex < aLen; elementIndex++ {
-				if (a[rowIndex][elementIndex] == b[rowIndex][elementIndex]) {
+				if a[rowIndex][elementIndex] == b[rowIndex][elementIndex] {
 					continue
 				}
 				return false
@@ -434,12 +432,11 @@ func (a dRow) cmpDataTable(b dRow) bool {
 	return true
 }
 
-
 func (a tableHeader) cmpHeader(b tableHeader) bool {
 	// fmt.Println("a", a, "b", b)
 	if len(a) == len(b) {
 		for index := 0; index < len(a); index++ {
-			if (a[index] != b[index]) {
+			if a[index] != b[index] {
 				// fmt.Println("a[",index,"] != b[",index,"]", a[index],"!=", b[index])
 				return false
 			}
@@ -455,11 +452,11 @@ func (a tableHeader) cmpHeader(b tableHeader) bool {
 // returns true if both tables are equal.
 func (a *DataTable) Cmp(b *DataTable) bool {
 	// fmt.Println("a.Count",a.Count(),"b.Count",b.Count())
-	if (a.Count() == b.Count()) {
+	if a.Count() == b.Count() {
 		// fmt.Println("count equal")
-		if (a.header.cmpHeader(b.header)) {
+		if a.header.cmpHeader(b.header) {
 			// fmt.Println("headers are equal")
-			if (dRow(a.table).cmpDataTable(dRow(b.table))) {
+			if dRow(a.table).cmpDataTable(dRow(b.table)) {
 				// fmt.Println("rows are equal")
 				return true
 			} else {
@@ -577,8 +574,8 @@ func (dt DataTable) String() string {
 	sfmt := ""
 	//sfmt = "TABLE START\n"
 	/* Ignore the dataRowIndex value */
-	if (len(dt.header) > 0) {
-		sfmt = strings.Join(dt.header,"|")
+	if len(dt.header) > 0 {
+		sfmt = strings.Join(dt.header, "|")
 		sfmt = sfmt + "\n" + "----------" + "\n"
 	}
 	for _, dataRow := range dt.table {
@@ -608,3 +605,4 @@ func (dts DataTables) String() string {
 func (dtr DataRow) String() string {
 	return strings.Join(dtr, "|")
 }
+

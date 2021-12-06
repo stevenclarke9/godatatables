@@ -2,7 +2,7 @@ package godatatables_test
 
 import (
 	"fmt"
-	"github.com/StevenClarke9/godatatables"
+	"github.com/stevenclarke9/godatatables"
 	"strings"
 	"testing"
 )
@@ -717,11 +717,15 @@ func TestDataTableWhereConditionUsingIndexValues(t *testing.T) {
 		}
 	}
 
+	printOrLog(t, fmt.Sprint("calling Where method"))
 	whereResultDataTable := dataTableFromStringTableReader.Where(whereFunc)
 
 	if whereResultDataTable.IsEmpty() == false {
+		printOrLog(t, fmt.Sprint("comparing the result with the correct result"))
 		if ok := whereResultDataTable.Cmp(&correctWhereResultDataTable); !ok {
-			t.Errorf("tables are not equal")
+			t.Errorf("tables are not equal.","wanted:",sprintCorrectWhereResultDataTable,"got:",)
+		} else {
+			printOrLog(t, fmt.Sprint("The tables are equal"))
 		}
 	} else {
 		t.Errorf("the joinedTable value IsEmpty")

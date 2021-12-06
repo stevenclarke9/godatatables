@@ -719,11 +719,11 @@ func TestDataTableWhereConditionUsingIndexValues(t *testing.T) {
 
 	printOrLog(t, fmt.Sprint("calling Where method"))
 	whereResultDataTable := dataTableFromStringTableReader.Where(whereFunc)
-
+	sprintWhereResultDataTable := fmt.Sprint(whereResultDataTable)
 	if whereResultDataTable.IsEmpty() == false {
 		printOrLog(t, fmt.Sprint("comparing the result with the correct result"))
 		if ok := whereResultDataTable.Cmp(&correctWhereResultDataTable); !ok {
-			t.Errorf("tables are not equal.","wanted:",sprintCorrectWhereResultDataTable,"got:",)
+			t.Errorf("tables are not equal. wanted: %s got: %s",sprintCorrectWhereResultDataTable,sprintWhereResultDataTable)
 		} else {
 			printOrLog(t, fmt.Sprint("The tables are equal"))
 		}

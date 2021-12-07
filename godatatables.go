@@ -104,11 +104,11 @@ func removeHeaderColumns(elements []string, columnIndexes []int) []string {
 	return header
 }
 
-func (dr DataRow) GetTableColumn(fieldIndex int64) string {
+func (dr DataRow) getTableColumn(fieldIndex int64) string {
 	return dr[fieldIndex]
 }
 
-func (dt DataTable) GetTableRow(rowIndex int64) *DataRow {
+func (dt DataTable) getTableRow(rowIndex int64) *DataRow {
 	return &dt.table[rowIndex]
 }
 

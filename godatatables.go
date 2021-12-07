@@ -26,10 +26,12 @@ type DataTable struct {
 
 type DataTables []DataTable
 
+/*
 type JoinedColumn struct {
 	leftTableColumn  int
 	rightTableColumn int
 }
+*/
 
 type dRow []DataRow
 
@@ -466,33 +468,33 @@ func (a *DataTable) Cmp(b *DataTable) bool {
 }
 
 // compareFloat64 is a helper function for sortRow.
-// returns false and -1 if i is equal to j
-// returns true and maxIndex if i is less than j
-// returns false and maxIndex if i is greater than j
-func compareFloat64(i float64, j float64, maxIndex int) (bool, int) {
+// returns 0 if i is equal to j
+// returns -1 if i is less than j
+// returns 1 if i is greater than j
+func compareFloat64(i float64, j float64) int {
 	if i == j {
-		return false, -1
+		return 0
 	} else {
 		if i < j {
-			return true, maxIndex
+			return -1
 		} else {
-			return false, maxIndex
+			return 1
 		}
 	}
 }
 
 // compareString is a helper function for sortRow.
-// returns false and -1 if i ia equal to j
-// returns true and maxIndex if i is less than j
-// returns false and maxIndex if i is greater than j
-func compareString(i string, j string, maxIndex int) (bool, int) {
+// returns 0 if i ia equal to j
+// returns -1 if i is less than j
+// returns 1 if i is greater than j
+func compareString(i string, j string) int {
 	if i == j {
-		return false, -1
+		return 0
 	} else {
 		if i < j {
-			return true, maxIndex
+			return -1
 		} else {
-			return false, maxIndex
+			return 1
 		}
 	}
 }
@@ -543,20 +545,32 @@ func (dt *DataTable) sortRow(indexes []int) {
 				isFloat64J = true
 			}
 			if isFloat64I && isFloat64J {
-				tmpResult, maxIndex := compareFloat64(float32I, float32J, lenIndex)
-				if maxIndex == -1 {
+				// tmpResult, maxIndex := compareFloat64(float32I, float32J, lenIndex)
+				intCmp := compareFloat64(float32I, float32J)
+				if intCmp == 0 {
 					continue
+				}
+				if intCmp == -1 {
+					result = true
+					k = lenIndex
 				} else {
-					result = tmpResult
+					// otherwise intCmp equals 1
+					result = false
 					k = lenIndex
 				}
 			} else {
 				// otherwise they can be compared as strings.
-				tmpResult, maxIndex := compareString(valueI, valueJ, lenIndex)
-				if maxIndex == -1 {
+				// tmpResult, maxIndex := compareString(valueI, valueJ, lenIndex)
+				intCmp := compareString(valueI, valueJ)
+				if intCmp == 0 {
 					continue
+				}
+				if intCmp == -1 {
+					result = true
+					k = lenIndex
 				} else {
-					result = tmpResult
+					// otherwise intCmp equals 1
+					result = false
 					k = lenIndex
 				}
 			}

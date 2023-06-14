@@ -1,6 +1,0 @@
-ID|Name|Location
-1|Steven|Brisbane
-2|Krissy|Brisbane
-3|Cathy|Sydney
-3|Nathan|Sydney
-4|Peter|Melbourne

@@ -145,13 +145,14 @@ func forTestSelectDataTableColumnsWithColumnNames() (godatatables.DataTable, god
 }
 
 /*
-Input/Result,DataTable variable, has a Header line, data type
-------------------------------------------------
-Input,dataTableStringsArrayWithoutHeader, no, array [][]string
-Input,stringTableWithoutHeader, no, string
-Result,dataTableFromArray, no, DataTable
-Result,dataTableFromStringTableReader, no DataTable
-Compare,dataTableFromArray,dataTableFromStringTableReader
+Input/Result, DataTable variable,                 has a Header line, data type
+------------------------------------------------------------------------------
+Input,        dataTableStringsArrayWithoutHeader, no,                 array [][]string
+Input,        stringTableWithoutHeader,           no,                 string
+Result,       dataTableFromArray,                 no,                 DataTable
+Result,       dataTableFromStringTableReader, no DataTable
+Compare,      dataTableFromArray
+Compare,      dataTableFromStringTableReader
 */
 
 func printOrLog(t *testing.T, s string) {
@@ -760,5 +761,57 @@ cc
 	printOrLog(t, fmt.Sprint(selectDataTable))
 	if columnValue != fmt.Sprint(selectDataTable) {
 		t.Errorf("the values are not equal. wanted: %s got: %s", columnValue, fmt.Sprint(selectDataTable))
+	}
+}
+
+/*
+table_name
+----------
+foos
+
+index field_name type
+----- ---------- ----
+0     id         int
+1     name       string
+2     parent     int
+
+sql query
+---------
+SELECT a.id, a.name, b.id, b.name FROM foos AS a JOIN foos AS b ON a.parent = b.id
+
+join
+table a to table b where a.parent = b.id
+select columns a.id, a.name, b.id, b.name
+*/
+func TestSelfJoin(t *testing.T) {
+
+	var stringTableWithHeader string = `id|name|parent
+1|C:|0
+2|Users|1
+3|Steven|2
+4|Documents|3
+5|Downloads|3
+6|PDF|4
+`
+	stringTableReader := strings.NewReader(stringTableWithHeader)
+	dataTableFromStringTableReader, err := godatatables.ReadTable(stringTableReader, true)
+
+	if err != nil {
+		t.Errorf("error recorded %s", err)
+	}
+
+	sprintDataTableFromStringTableReader := fmt.Sprint(dataTableFromStringTableReader)
+	printOrLog(t, "sprintDataTableFromStringTableReader:")
+	printOrLog(t, sprintDataTableFromStringTableReader)
+
+	joinedTable := dataTableFromStringTableReader.InnerJoin(true, []int{2}, []int{0}, dataTableFromStringTableReader)
+	if joinedTable.IsEmpty() {
+		printOrLog(t, "the joinedTable value is nil")
+		t.Errorf("an empty data table is returned!")
+	}
+	if joinedTable.IsEmpty() == false {
+		sprintJoinedTable := fmt.Sprint(joinedTable)
+		printOrLog(t, "sprintJoinedTable:")
+		printOrLog(t, sprintJoinedTable)
 	}
 }
